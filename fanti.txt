@@ -1,0 +1,131 @@
+Table Users {
+  Email varchar(255) [unique, not null]
+  Name varchar(255) [not null]
+  Avatar varchar(500)
+  Role UserRole [not null]
+  IsActive boolean [default: true]
+}
+
+Table Projects {
+  Name varchar(255) [not null]
+  Description text
+  StartDate datetimeoffset [not null]
+  EndDate datetimeoffset
+  Status ProjectStatus [not null, default: 'Active']
+  OwnerId guid [ref: > Users.Id]
+}
+
+Table ProjectUsers {
+  ProjectId guid [ref: > Projects.Id]
+  UserId guid [ref: > Users.Id]
+  Role ProjectRole [not null]
+  JoinedAt datetimeoffset [not null]
+}
+
+Table Sprints {
+  ProjectId guid [ref: > Projects.Id]
+  Name varchar(255) [not null]
+  Description text
+  StartDate datetimeoffset [not null]
+  EndDate datetimeoffset [not null]
+  Goal text
+  Status SprintStatus [not null, default: 'Planning']
+}
+
+Table Tasks {
+  ProjectId guid [ref: > Projects.Id]
+  SprintId guid [ref: > Sprints.Id, null]
+  ParentTaskId guid [ref: > Tasks.Id, null]
+  AssigneeId guid [ref: > Users.Id, null]
+  Title varchar(500) [not null]
+  Description text
+  StoryPoints int
+  Priority TaskPriority [not null, default: 'Medium']
+  Status TaskStatus [not null, default: 'ToDo']
+  Type TaskType [not null, default: 'Story']
+  EstimatedHours decimal(5,2)
+  ActualHours decimal(5,2)
+  DueDate datetimeoffset
+  CompletedAt datetimeoffset
+}
+
+Table TaskComments {
+  TaskId guid [ref: > Tasks.Id]
+  UserId guid [ref: > Users.Id]
+  Comment text [not null]
+}
+
+Table TaskAttachments {
+  TaskId guid [ref: > Tasks.Id]
+  FileName varchar(255) [not null]
+  FilePath varchar(500) [not null]
+  FileSize bigint [not null]
+  ContentType varchar(100) [not null]
+  UploadedById guid [ref: > Users.Id]
+}
+
+Table TaskHistory {
+  TaskId guid [ref: > Tasks.Id]
+  UserId guid [ref: > Users.Id]
+  Action varchar(100) [not null]
+  OldValue text
+  NewValue text
+  FieldChanged varchar(100)
+}
+
+// Enums
+Enum UserRole {
+  Admin
+  ProductOwner
+  ScrumMaster
+  Developer
+  Stakeholder
+}
+
+Enum ProjectStatus {
+  Active
+  Completed
+  OnHold
+  Cancelled
+}
+
+Enum ProjectRole {
+  ProductOwner
+  ScrumMaster
+  Developer
+  Stakeholder
+}
+
+Enum SprintStatus {
+  Planning
+  Active
+  Review
+  Retrospective
+  Completed
+}
+
+Enum TaskStatus {
+  Backlog
+  ToDo
+  InProgress
+  InReview
+  Testing
+  Done
+  Blocked
+}
+
+Enum TaskPriority {
+  Low
+  Medium
+  High
+  Critical
+}
+
+Enum TaskType {
+  Epic
+  Story
+  Task
+  Bug
+  Improvement
+  SubTask
+}
