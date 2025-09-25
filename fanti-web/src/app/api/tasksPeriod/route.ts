@@ -7,10 +7,10 @@ export async function GET(req: NextRequest) {
         const { searchParams } = new URL(req.url);
         const id = searchParams.get('id');
         if (id) {
-            const response = await api.get(`/Period/${id}`);
+            const response = await api.get(`/TasksPeriod/${id}`);
             return NextResponse.json(response.data);
         }
-        const response = await api.get('/Period');
+        const response = await api.get('/TasksPeriod');
         return NextResponse.json(response.data);
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -21,8 +21,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        // Staffs is already array of GUIDs
-        const response = await api.post('/Period', body);
+        const response = await api.post('/TasksPeriod', body);
         return NextResponse.json(response.data);
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -33,7 +32,7 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
     try {
         const body = await req.json();
-        const response = await api.put('/Period', body);
+        const response = await api.put('/TasksPeriod', body);
         return NextResponse.json(response.data);
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -46,7 +45,7 @@ export async function DELETE(req: NextRequest) {
         const { searchParams } = new URL(req.url);
         const id = searchParams.get('id');
         if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
-        await api.delete(`/Period/${id}`);
+        await api.delete(`/TasksPeriod/${id}`);
         return NextResponse.json({ success: true });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });

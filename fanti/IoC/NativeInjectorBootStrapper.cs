@@ -13,6 +13,7 @@ namespace IoC
         {
 
             #region Repositories
+            services.AddScoped<ITasksPeriodRepository, TasksPeriodRepository>();
             services.AddScoped<IPeriodStaffRepository, PeriodStaffRepository>();
             services.AddScoped<IPeriodRepository, PeriodRepository>();
             services.AddScoped<IStaffRepository, StaffRepository>();
@@ -21,9 +22,11 @@ namespace IoC
             services.AddScoped<ITaskDependenciesRepository, TaskDependenciesRepository>();            services.AddScoped<ITasksRepository, TasksRepository>();
             services.AddScoped<ISprintsRepository, SprintsRepository>();            services.AddScoped<IProjectsRepository, ProjectsRepository>();
             services.AddScoped<IUsersRepository, UsersRepository>();
+            services.AddScoped<ITasksPeriodRepository, TasksPeriodRepository>();
             #endregion
 
             #region Handlers
+            services.AddTransient<TasksPeriodHandler>();
             services.AddTransient<PeriodStaffHandler>();
             services.AddTransient<PeriodHandler>();
             services.AddTransient<StaffHandler>();

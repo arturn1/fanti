@@ -8,7 +8,7 @@ namespace Domain.Commands
     {
 
         public UpdateSprintsCommand() { }
-        public UpdateSprintsCommand(Guid id, Guid ProjectId, string Name, string Description, string StartDate, string EndDate, string Goal, string Status)
+        public UpdateSprintsCommand(Guid id, Guid ProjectId, string Name, string Description, DateTime StartDate, DateTime EndDate, string Goal, string Status)
         {
             this.Id = id;
             this.ProjectId = ProjectId;
@@ -25,8 +25,8 @@ namespace Domain.Commands
         public Guid? ProjectId { get; set; }
         public string? Name { get; set; }
         public string? Description { get; set; }
-        public string StartDate { get; set; }
-        public string EndDate { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
         public string? Goal { get; set; }
         public string Status { get; set; }
 

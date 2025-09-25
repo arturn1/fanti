@@ -10,7 +10,8 @@ import {
   CalendarOutlined,
   TeamOutlined,
   CheckSquareOutlined,
-  ToolOutlined
+  ToolOutlined,
+  PicRightOutlined
 } from '@ant-design/icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter, usePathname } from 'next/navigation';
@@ -90,13 +91,13 @@ export default function AppHeader() {
     },
     {
       key: '/tasks',
-      icon: <CalendarOutlined />,
+      icon: <PicRightOutlined />,
       label: <Link href="/tasks">RoadMap</Link>,
     },
     {
       key: '/periods',
       icon: <CalendarOutlined />,
-      label: <Link href="/periods">Períodos</Link>,
+      label: <Link href="/periods">Sprints</Link>,
     },
     {
       key: '/teams-staff',

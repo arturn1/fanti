@@ -8,14 +8,13 @@ namespace Domain.Entities
     {
         public PeriodEntity() 
         {
-                        Staffs = new List<StaffEntity>();
         }
         
         
         
-        public int Duration { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
         public string Name { get; set; }
-        public List<StaffEntity> Staffs { get; set; }
 
     }
 }

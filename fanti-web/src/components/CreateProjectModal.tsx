@@ -36,8 +36,8 @@ export default function CreateProjectModal({ visible, onClose, onSuccess }: Crea
         name: values.name,
         description: values.description || "",
         url: values.url || "",
-        startDate: values.dateRange ? values.dateRange[0].format('YYYY-MM-DD') : new Date().toISOString().split('T')[0],
-        endDate: values.dateRange ? values.dateRange[1].format('YYYY-MM-DD') : "",
+        startDate: values.dateRange ? values.dateRange[0].toISOString() : new Date().toISOString(),
+        endDate: values.dateRange ? values.dateRange[1].toISOString() : "",
         status: "1", // String conforme esperado pelo comando
         ownerId: "00000000-0000-0000-0000-000000000000" // GUID vazio como padrão
       };

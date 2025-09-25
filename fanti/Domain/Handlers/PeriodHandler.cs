@@ -29,6 +29,7 @@ namespace Domain.Handlers
             }
             PeriodEntity entity = new();
             _mapper.Map(command, entity);
+            var v = entity;
             await _PeriodRepository.PostAsync(entity);
 
             // Create PeriodStaffEntity records if staff IDs provided
@@ -41,7 +42,7 @@ namespace Domain.Handlers
                         PeriodId = entity.ID,
                         StaffId = staffId,
                         TotalHours = 0,
-                        TaskNumber = 0
+
                     };
                     await _PeriodStaffRepository.PostAsync(periodStaff);
                 }
@@ -59,9 +60,10 @@ namespace Domain.Handlers
             }
             PeriodEntity entity = await _PeriodRepository.GetByIdAsync(command.Id);
             if (entity == null) return new CommandResult("Entity not found", HttpStatusCode.NotFound);
-            // Atualizar apenas campos não-nulos
-
+            
+            _mapper.Map(command, entity);
             await _PeriodRepository.UpdateAsync(entity);
+
             return new CommandResult(entity, HttpStatusCode.OK);
         }
     }

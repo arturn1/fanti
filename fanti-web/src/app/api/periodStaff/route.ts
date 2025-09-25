@@ -35,23 +35,6 @@ export async function POST(req: NextRequest) {
     }
 }
 
-// PUT: Update
-export async function PUT(req: NextRequest) {
-    try {
-        const body = await req.json();
-        if (body.Staff && typeof body.Staff === 'object' && body.Staff.id) {
-            body.Staff = body.Staff.id;
-        }
-        if (body.Period && typeof body.Period === 'object' && body.Period.id) {
-            body.Period = body.Period.id;
-        }
-        const response = await api.put('/PeriodStaff', body);
-        return NextResponse.json(response.data);
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-}
-
 // DELETE: Delete
 export async function DELETE(req: NextRequest) {
     try {

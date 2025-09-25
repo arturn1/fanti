@@ -11,18 +11,18 @@ namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class PeriodStaffController : BaseController
+    public class TasksPeriodController : BaseController
     {
-        private readonly IPeriodStaffRepository _PeriodStaffRepository;
-        public PeriodStaffController(IPeriodStaffRepository PeriodStaffRepository, DefaultDictionary defaultDictionary) : base(defaultDictionary)
+        private readonly ITasksPeriodRepository _TasksPeriodRepository;
+        public TasksPeriodController(ITasksPeriodRepository TasksPeriodRepository, DefaultDictionary defaultDictionary) : base(defaultDictionary)
         {
-            _PeriodStaffRepository = PeriodStaffRepository;
+            _TasksPeriodRepository = TasksPeriodRepository;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAllAsync()
         {
-            var models = await _PeriodStaffRepository.GetAllAsync();
+            var models = await _TasksPeriodRepository.GetAllAsync();
 
             return Ok(new CommandResult(models, HttpStatusCode.OK));
         }
@@ -30,24 +30,23 @@ namespace API.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetByIdAsync(Guid id)
         {
-            var models = await _PeriodStaffRepository.GetByIdAsync(id);
+            var models = await _TasksPeriodRepository.GetByIdAsync(id);
             if (models == null) return NotFound(_defaultDictionary.Response["NotFound"]); 
 
             return Ok(new CommandResult(models, HttpStatusCode.OK));
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreatePeriodStaffAsync([FromBody] CreatePeriodStaffCommand command, [FromServices] PeriodStaffHandler handler)
+        public async Task<IActionResult> CreateTasksPeriodAsync([FromBody] CreateTasksPeriodCommand command, [FromServices] TasksPeriodHandler handler)
         {
             var handle = await handler.Handle(command);
 
             return Ok(handle);
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdatePeriodStaffAsync([FromBody] UpdatePeriodStaffCommand command, [FromServices] PeriodStaffHandler handler)
+        [HttpPut]
+        public async Task<IActionResult> UpdateTasksPeriodAsync([FromBody] UpdateTasksPeriodCommand command, [FromServices] TasksPeriodHandler handler)
         {
-            command.Id = Guid.Parse((string)RouteData.Values["id"]);
             var handle = await handler.Handle(command);
 
             return Ok(handle);
@@ -56,10 +55,10 @@ namespace API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteByIdAsync(Guid id)
         {
-            var entity = await _PeriodStaffRepository.GetByIdAsync(id);
+            var entity = await _TasksPeriodRepository.GetByIdAsync(id);
             if (entity == null) return NotFound(_defaultDictionary.Response["NotFound"]); 
                 
-            _PeriodStaffRepository.DeleteObject(entity);
+            _TasksPeriodRepository.DeleteObject(entity);
 
             var result = new { data = "Removed success!!!" };
 

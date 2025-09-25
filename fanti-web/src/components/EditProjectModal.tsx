@@ -66,8 +66,8 @@ export default function EditProjectModal({ visible, project, onClose, onSuccess 
         name: values.name,
         description: values.description || "",
         url: values.url || "",
-        startDate: values.dateRange ? values.dateRange[0].format('YYYY-MM-DD') : "",
-        endDate: values.dateRange ? values.dateRange[1].format('YYYY-MM-DD') : "",
+        startDate: values.dateRange ? values.dateRange[0].toISOString() : "",
+        endDate: values.dateRange ? values.dateRange[1].toISOString() : "",
         status: values.status.toString(),
         ownerId: project.ownerId || "00000000-0000-0000-0000-000000000000"
       };

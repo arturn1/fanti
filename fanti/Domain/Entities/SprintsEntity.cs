@@ -8,8 +8,8 @@ namespace Domain.Entities
         public SprintsEntity() 
         {
         }
-        
-        public SprintsEntity(Guid ProjectId, string Name, string Description, string StartDate, string EndDate, string Goal, string Status)
+
+        public SprintsEntity(Guid ProjectId, string Name, string Description, DateTime StartDate, DateTime EndDate, string Goal, string Status)
         {
             this.ProjectId = ProjectId;
             this.Name = Name;
@@ -24,8 +24,8 @@ namespace Domain.Entities
         public Guid ProjectId { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
-        public string StartDate { get; set; }
-        public string EndDate { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
         public string Goal { get; set; }
         public string Status { get; set; }
 

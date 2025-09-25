@@ -8,8 +8,8 @@ namespace Domain.Entities
     {
         public TasksEntity() 
         {
-                        Assignees = new List<string>();
-                        Dependencies = new List<string>();
+            Assignees = new List<string>();
+            Dependencies = new List<string>();
         }
         
         

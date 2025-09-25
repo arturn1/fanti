@@ -427,3 +427,64 @@ export interface ProjectFilters {
   ownerId?: string;
   search?: string;
 }
+
+// Period Management Types
+export interface Staff {
+  id: string;
+  name: string;
+}
+
+export interface PeriodStaff {
+  id: string;
+  periodId: string;
+  staffId: string;
+  totalHours: number;
+  taskNumber: number;
+}
+
+export interface TasksPeriod {
+  id: string;
+  periodStaffId: string;
+  taskNumber: number;
+  taskHours: number;
+  projectId?: string;
+}
+
+export interface Period {
+  id: string;
+  name: string;
+  startDate?: string;
+  endDate?: string;
+  staffs?: Staff[];
+}
+
+// Organization Types
+export interface TaskItem {
+  id?: string;
+  number: number;
+  hours: number;
+  projectId?: string;
+}
+
+export interface StaffOrganizationData {
+  totalHours: number;
+  tasks: TaskItem[];
+  remaining: number;
+}
+
+export interface OrganizationData {
+  [staffId: string]: StaffOrganizationData;
+}
+
+// Modal States
+export interface ModalStates {
+  createEdit: boolean;
+  view: boolean;
+  organization: boolean;
+}
+
+export interface ModalData {
+  editingPeriod: Period | null;
+  viewingPeriod: Period | null;
+  organizingPeriod: Period | null;
+}

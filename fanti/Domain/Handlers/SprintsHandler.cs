@@ -102,7 +102,7 @@ namespace Domain.Handlers
                 
                 if (earliestStartDate.HasValue)
                 {
-                    var newStartDateString = earliestStartDate.Value.ToString("yyyy-MM-dd");
+                    var newStartDateString = earliestStartDate.Value;
                     if (sprintEntity.StartDate != newStartDateString)
                     {
                         sprintEntity.StartDate = newStartDateString;
@@ -112,7 +112,7 @@ namespace Domain.Handlers
 
                 if (latestEndDate.HasValue)
                 {
-                    var newEndDateString = latestEndDate.Value.ToString("yyyy-MM-dd");
+                    var newEndDateString = latestEndDate.Value;
                     if (sprintEntity.EndDate != newEndDateString)
                     {
                         sprintEntity.EndDate = newEndDateString;

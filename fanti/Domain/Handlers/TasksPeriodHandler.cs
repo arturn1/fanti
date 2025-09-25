@@ -8,18 +8,18 @@ using System.Net;
 
 namespace Domain.Handlers
 {
-    public class PeriodStaffHandler: IHandler<CreatePeriodStaffCommand>, IHandler<UpdatePeriodStaffCommand>
+    public class TasksPeriodHandler: IHandler<CreateTasksPeriodCommand>, IHandler<UpdateTasksPeriodCommand>
     {
-        private readonly IPeriodStaffRepository _PeriodStaffRepository;
+        private readonly ITasksPeriodRepository _TasksPeriodRepository;
         private readonly IMapper _mapper;
-        public PeriodStaffHandler(IPeriodStaffRepository PeriodStaffRepository, IMapper mapper)
+        public TasksPeriodHandler(ITasksPeriodRepository TasksPeriodRepository, IMapper mapper)
         {
-            _PeriodStaffRepository = PeriodStaffRepository;
+            _TasksPeriodRepository = TasksPeriodRepository;
             _mapper = mapper;
         }
         
 
-        public async Task<ICommandResult> Handle(CreatePeriodStaffCommand command)
+        public async Task<ICommandResult> Handle(CreateTasksPeriodCommand command)
         {
             command.IsCommandValid();
 
@@ -29,15 +29,15 @@ namespace Domain.Handlers
             }
 
 
-            PeriodStaffEntity entity = new ();
+            TasksPeriodEntity entity = new ();
             _mapper.Map(command, entity);
 
-            await _PeriodStaffRepository.PostAsync(entity);
+            await _TasksPeriodRepository.PostAsync(entity);
 
             return new CommandResult(entity, HttpStatusCode.Created);
         }
 
-        public async Task<ICommandResult> Handle(UpdatePeriodStaffCommand command)
+        public async Task<ICommandResult> Handle(UpdateTasksPeriodCommand command)
         {
             command.IsCommandValid();
 
@@ -47,13 +47,13 @@ namespace Domain.Handlers
             }
 
 
-            PeriodStaffEntity entity = await _PeriodStaffRepository.GetByIdAsync(command.Id);
+            TasksPeriodEntity entity = await _TasksPeriodRepository.GetByIdAsync(command.Id);
 
             if (entity == null) return new CommandResult("Entity not found", HttpStatusCode.NotFound);
 
             _mapper.Map(command, entity);
 
-            await _PeriodStaffRepository.UpdateAsync(entity);
+            await _TasksPeriodRepository.UpdateAsync(entity);
 
             return new CommandResult(entity, HttpStatusCode.Created);
             
