@@ -1,3 +1,46 @@
+// Team type based on API response
+export interface Team {
+  id: string;
+  name: string;
+  description?: string;
+  // Add more fields if needed from API
+}
+export enum TaskCategory {
+  Melhoria = 'Melhoria',
+  Desenvolvimento = 'Desenvolvimento',
+  Correcao = 'Correção',
+  Hotfix = 'Hotfix'
+}
+
+export const getTaskCategoryDisplayName = (category: TaskCategory | string): string => {
+  switch (category) {
+    case TaskCategory.Melhoria:
+      return 'Melhoria';
+    case TaskCategory.Desenvolvimento:
+      return 'Desenvolvimento';
+    case TaskCategory.Correcao:
+      return 'Correção';
+    case TaskCategory.Hotfix:
+      return 'Hotfix';
+    default:
+      return String(category);
+  }
+};
+
+export const getTaskCategoryByDisplayName = (displayName: string): TaskCategory => {
+  switch (displayName) {
+    case 'Melhoria':
+      return TaskCategory.Melhoria;
+    case 'Desenvolvimento':
+      return TaskCategory.Desenvolvimento;
+    case 'Correção':
+      return TaskCategory.Correcao;
+    case 'Hotfix':
+      return TaskCategory.Hotfix;
+    default:
+      return TaskCategory.Desenvolvimento;
+  }
+};
 // Enums
 export enum UserRole {
   Admin = 1,
@@ -74,7 +117,7 @@ export const getTaskStatusDisplayName = (status: string | TaskStatus): string =>
   if (typeof status === 'number') {
     status = getTaskStatusName(status);
   }
-  
+
   switch (status) {
     case 'ToDo':
       return 'A Fazer';
@@ -209,6 +252,7 @@ export interface Task {
   priority: TaskPriority;
   status: TaskStatus | string; // Aceita tanto enum quanto string do backend
   type: TaskType;
+  category?: TaskCategory | string;
   estimatedHours?: number;
   actualHours?: number;
   startDate?: string;
@@ -220,6 +264,7 @@ export interface Task {
   isDisabled?: boolean;
   hideChildren?: boolean;
   tags?: string;
+  teamId?: string; // Equipe
   created: string;
   updated?: string;
 }
@@ -327,6 +372,7 @@ export interface CreateTaskDto {
   Priority: string;     // String, não enum
   Status?: string;      // String, não enum
   Type?: string;        // String, não enum
+  Category?: string;    // String, não enum
   EstimatedHours?: number;
   StartDate?: string;
   EndDate?: string;
@@ -334,6 +380,7 @@ export interface CreateTaskDto {
   Color?: string;       // Hex color
   IsDisabled?: boolean;
   HideChildren?: boolean;
+  TeamId?: string;      // Equipe
 }
 
 export interface CreateUserDto {

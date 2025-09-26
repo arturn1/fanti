@@ -33,7 +33,8 @@ import { UnifiedTaskModal } from '@/components/UnifiedTaskModal';
 // import { sprintsService } from '@/services/sprints';
 // import { taskDependenciesService } from '@/services/taskDependencies';
 // import { tasksService } from '@/services/tasks';
-import { Project, Sprint, Task, TaskDependency } from '@/types';
+import { getTeams } from '@/services/teams';
+import { Project, Sprint, Task, TaskDependency, Team } from '@/types';
 import { getColorVariations, getTaskColorByStatus } from '@/utils/taskColors';
 import dayjs from 'dayjs';
 
@@ -58,6 +59,8 @@ function TasksPageContent() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [sprints, setSprints] = useState<Sprint[]>([]);
   const [dependencies, setDependencies] = useState<TaskDependency[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [selectedTeam, setSelectedTeam] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [createModalVisible, setCreateModalVisible] = useState(false);
 
@@ -105,6 +108,7 @@ function TasksPageContent() {
 
   useEffect(() => {
     loadData();
+    getTeams().then(setTeams).catch(() => setTeams([]));
   }, []);
 
   // Resetar selectedSprint se estiver em uma milestone concluída
@@ -180,6 +184,10 @@ function TasksPageContent() {
 
     if (selectedSprint !== 'all') {
       filteredTasks = filteredTasks.filter(task => task.sprintId === selectedSprint);
+    }
+
+    if (selectedTeam !== 'all') {
+      filteredTasks = filteredTasks.filter(task => task.teamId === selectedTeam);
     }
 
     // Filtrar tarefas que não pertencem a milestones concluídas
@@ -292,7 +300,7 @@ function TasksPageContent() {
         }
       } as GanttTask;
     });
-  }, [tasks, projects, sprints, dependencies, selectedProject, selectedSprint, loading, forceUpdate]);
+  }, [tasks, projects, sprints, dependencies, selectedProject, selectedSprint, selectedTeam, loading, forceUpdate]);
 
   const handleOpenManagement = (tab: 'edit' | 'team' | 'dependencies') => {
     if (selectedTaskForUnified) {
@@ -360,6 +368,19 @@ function TasksPageContent() {
                 {availableSprints.map(sprint => (
                   <Option key={sprint.id} value={sprint.id}>
                     {sprint.name}
+                  </Option>
+                ))}
+              </Select>
+              <Select
+                value={selectedTeam}
+                onChange={setSelectedTeam}
+                style={{ minWidth: 150 }}
+                placeholder="Filtrar por equipe"
+              >
+                <Option value="all">Todas as Equipes</Option>
+                {teams.map(team => (
+                  <Option key={team.id} value={team.id}>
+                    {team.name}
                   </Option>
                 ))}
               </Select>

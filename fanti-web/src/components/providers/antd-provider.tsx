@@ -1,6 +1,6 @@
 'use client';
 
-import { ConfigProvider, App } from 'antd';
+import { App, ConfigProvider } from 'antd';
 import ptBR from 'antd/locale/pt_BR';
 import { useEffect } from 'react';
 

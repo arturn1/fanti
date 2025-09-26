@@ -2,12 +2,12 @@ using Domain.Commands.Contracts;
 using Domain.Validation;
 using System.Collections.Generic;
 
-namespace Domain.Commands 
+namespace Domain.Commands
 {
 
     public class UpdateTasksCommand : ValidatableTypes, ICommand
     {
-        public UpdateTasksCommand(Guid id, Guid? ProjectId, Guid? SprintId, Guid? ParentTaskId, Guid AssigneeId, string Title, string Description, string Priority, string Status, decimal EstimatedHours, DateTime? StartDate, DateTime? EndDate, decimal Progress, List<string>? Assignees, List<string>? Dependencies, string? Color, bool IsDisabled, bool HideChildren, DateTime? CompletedDate, string? Tags, string? Type)
+        public UpdateTasksCommand(Guid id, Guid? ProjectId, Guid? SprintId, Guid? ParentTaskId, Guid AssigneeId, string Title, string Description, string Priority, string Status, decimal EstimatedHours, DateTime? StartDate, DateTime? EndDate, decimal Progress, List<string>? Assignees, List<string>? Dependencies, string? Color, bool IsDisabled, bool HideChildren, DateTime? CompletedDate, string? Tags, string? Type, string? Category, Guid TeamId)
         {
             this.Id = id;
             this.ProjectId = ProjectId;
@@ -30,6 +30,8 @@ namespace Domain.Commands
             this.CompletedDate = CompletedDate;
             this.Tags = Tags;
             this.Type = Type;
+            this.Category = Category;
+            this.TeamId = TeamId;
         }
 
         public Guid Id { get; set; }
@@ -53,7 +55,8 @@ namespace Domain.Commands
         public DateTime? CompletedDate { get; set; }
         public string? Tags { get; set; }
         public string? Type { get; set; }
-        
+        public string? Category { get; set; }
+        public Guid TeamId { get; set; }
 
 
         public bool IsCommandValid()

@@ -5,9 +5,9 @@ namespace Domain.Commands.TasksCommands
 {
     public class EditTaskCommand : ValidatableTypes, ICommand
     {
-        public EditTaskCommand(Guid id, string title, string description, int priority, 
-            int status, decimal estimatedHours, DateTime? startDate, DateTime? endDate, 
-            decimal progress, string? color, string? tags)
+        public EditTaskCommand(Guid id, string title, string description, int priority,
+            int status, decimal estimatedHours, DateTime? startDate, DateTime? endDate,
+            decimal progress, string? color, string? tags, string? category, Guid? teamId)
         {
             Id = id;
             Title = title;
@@ -20,6 +20,8 @@ namespace Domain.Commands.TasksCommands
             Progress = progress;
             Color = color;
             Tags = tags;
+            Category = category;
+            TeamId = teamId;
         }
 
         public Guid Id { get; set; }
@@ -33,6 +35,8 @@ namespace Domain.Commands.TasksCommands
         public decimal Progress { get; set; }
         public string? Color { get; set; }
         public string? Tags { get; set; }
+        public string? Category { get; set; }
+        public Guid? TeamId { get; set; }
 
         public bool IsCommandValid()
         {

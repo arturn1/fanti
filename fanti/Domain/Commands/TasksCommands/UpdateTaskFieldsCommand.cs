@@ -21,6 +21,9 @@ namespace Domain.Commands
         public bool? HideChildren { get; set; }
         public string? Status { get; set; }
         public string? Priority { get; set; }
+        public string? Category { get; set; }
+        public Guid? TeamId { get; set; } = null;
+        public string? Title { get; set; }
 
         public bool IsCommandValid()
         {

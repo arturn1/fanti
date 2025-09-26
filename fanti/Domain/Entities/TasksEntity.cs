@@ -3,17 +3,17 @@ using System.Collections.Generic;
 
 namespace Domain.Entities
 {
-    
-    public class TasksEntity : BaseEntity 
+
+    public class TasksEntity : BaseEntity
     {
-        public TasksEntity() 
+        public TasksEntity()
         {
             Assignees = new List<string>();
             Dependencies = new List<string>();
         }
-        
-        
-        
+
+
+
         public Guid? ProjectId { get; set; }
         public Guid? SprintId { get; set; }
         public Guid? ParentTaskId { get; set; }
@@ -34,6 +34,9 @@ namespace Domain.Entities
         public bool HideChildren { get; set; }
         public DateTime? CompletedDate { get; set; }
         public string? Tags { get; set; }
+        public string? Category { get; set; }
+        public Guid? TeamId { get; set; }
+        public virtual TeamEntity? Team { get; set; }
 
     }
 }

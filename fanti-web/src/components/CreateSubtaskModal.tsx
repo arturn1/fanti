@@ -1,19 +1,29 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { CreateTaskDto, getTaskPriorityName, getTaskStatusByDisplayName, getTaskStatusDisplayName, getTaskStatusName, Task, TaskCategory, TaskPriority, Team } from '@/types';
+import { getAllStatusColors } from '@/utils/taskColors';
 import {
-  Modal,
+  App,
+  Button,
+  DatePicker,
   Form,
   Input,
+  Modal,
   Select,
-  DatePicker,
-  Button,
   Space,
-  App,
 } from 'antd';
-import { Task, TaskStatus, TaskPriority, CreateTaskDto, getTaskStatusName, getTaskPriorityName, getTaskStatusDisplayName, getTaskStatusByDisplayName } from '@/types';
-import { getAllStatusColors } from '@/utils/taskColors';
 import dayjs from 'dayjs';
+import React, { useEffect, useState } from 'react';
+// Fetch teams for the Team select field
+const useTeams = () => {
+  const [teams, setTeams] = useState<Team[]>([]);
+  useEffect(() => {
+    fetch('/api/teams')
+      .then(res => res.json())
+      .then(data => setTeams(data?.data || []));
+  }, []);
+  return teams;
+};
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -33,6 +43,7 @@ export const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
 }) => {
   const { message } = App.useApp();
   const [form] = Form.useForm();
+  const teams = useTeams();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -59,6 +70,7 @@ export const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
         Priority: getTaskPriorityName(TaskPriority.Medium),
         Status: getTaskStatusByDisplayName(values.status),
         Type: values.type,
+        Category: values.category,
         EstimatedHours: 0,
         StartDate: values.startDate ? dayjs(values.startDate).format('YYYY-MM-DD') : undefined,
         EndDate: values.endDate ? dayjs(values.endDate).format('YYYY-MM-DD') : undefined,
@@ -66,6 +78,7 @@ export const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
         Color: undefined,
         IsDisabled: values.isDisabled || false,
         HideChildren: values.hideChildren || false,
+        TeamId: values.teamId,
       };
       await fetch(`/api/tasks`, {
         method: 'POST',
@@ -138,7 +151,7 @@ export const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
           name="description"
           label="Descrição"
         >
-          <TextArea 
+          <TextArea
             placeholder="Digite a descrição da subtarefa"
             rows={3}
           />
@@ -158,17 +171,46 @@ export const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
           </Select>
         </Form.Item>
 
-        <Form.Item
-          name="type"
-          label="Tipo"
-          rules={[{ required: true, message: 'Por favor, selecione o tipo' }]}
-        >
-          <Select placeholder="Selecione o tipo">
-            <Option value="task">Tarefa</Option>
-            <Option value="milestone">Marco</Option>
-            <Option value="project">Projeto</Option>
-          </Select>
-        </Form.Item>
+
+        <Space.Compact style={{ width: '100%', marginBottom: 16 }}>
+          <Form.Item
+            name="type"
+            label="Tipo"
+            style={{ flex: 1, marginRight: 8 }}
+            rules={[{ required: true, message: 'Por favor, selecione o tipo' }]}
+          >
+            <Select placeholder="Selecione o tipo">
+              <Option value="task">Tarefa</Option>
+              <Option value="milestone">Marco</Option>
+              <Option value="project">Projeto</Option>
+            </Select>
+          </Form.Item>
+          <Form.Item
+            name="category"
+            label="Categoria"
+            style={{ flex: 1, marginRight: 8 }}
+            rules={[{ required: true, message: 'Por favor, selecione a categoria' }]}
+          >
+            <Select placeholder="Selecione a categoria">
+              <Option value={TaskCategory.Melhoria}>Melhoria</Option>
+              <Option value={TaskCategory.Desenvolvimento}>Desenvolvimento</Option>
+              <Option value={TaskCategory.Correcao}>Correção</Option>
+              <Option value={TaskCategory.Hotfix}>Hotfix</Option>
+            </Select>
+          </Form.Item>
+          <Form.Item
+            name="teamId"
+            label="Equipe"
+            style={{ flex: 1 }}
+            rules={[]}
+          >
+            <Select placeholder="Selecione a equipe">
+              {teams.map((team) => (
+                <Option key={team.id} value={team.id}>{team.name}</Option>
+              ))}
+            </Select>
+          </Form.Item>
+        </Space.Compact>
 
         <Space.Compact style={{ display: 'flex', marginBottom: 16 }}>
           <Form.Item
@@ -176,7 +218,7 @@ export const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
             label="Data de Início"
             style={{ flex: 1, marginRight: 8 }}
           >
-            <DatePicker 
+            <DatePicker
               style={{ width: '100%' }}
               placeholder="Data de início"
               format="DD/MM/YYYY"
@@ -188,7 +230,7 @@ export const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
             label="Data de Fim"
             style={{ flex: 1 }}
           >
-            <DatePicker 
+            <DatePicker
               style={{ width: '100%' }}
               placeholder="Data de fim"
               format="DD/MM/YYYY"

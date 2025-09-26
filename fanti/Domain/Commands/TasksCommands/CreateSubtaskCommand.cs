@@ -6,9 +6,9 @@ namespace Domain.Commands.TasksCommands
 {
     public class CreateSubtaskCommand : ValidatableTypes, ICommand
     {
-        public CreateSubtaskCommand(Guid parentTaskId, string title, string description, 
-            int priority, int status, decimal estimatedHours, DateTime? startDate, 
-            DateTime? endDate, string? color, string? tags)
+        public CreateSubtaskCommand(Guid parentTaskId, string title, string description,
+            int priority, int status, decimal estimatedHours, DateTime? startDate,
+            DateTime? endDate, string? color, string? tags, string? category, Guid? teamId)
         {
             ParentTaskId = parentTaskId;
             Title = title;
@@ -25,6 +25,8 @@ namespace Domain.Commands.TasksCommands
             Dependencies = new List<string>();
             IsDisabled = false;
             HideChildren = false;
+            Category = category;
+            TeamId = teamId;
         }
 
         public Guid ParentTaskId { get; set; }
@@ -42,7 +44,8 @@ namespace Domain.Commands.TasksCommands
         public bool IsDisabled { get; set; }
         public bool HideChildren { get; set; }
         public string? Tags { get; set; }
-
+        public string? Category { get; set; }
+        public Guid? TeamId { get; set; }
         // Propriedades herdadas da tarefa pai (serão preenchidas pelo handler)
         public Guid? ProjectId { get; set; }
         public Guid? SprintId { get; set; }

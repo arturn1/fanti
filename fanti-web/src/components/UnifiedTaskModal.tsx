@@ -4,14 +4,12 @@
 // import { taskDependenciesService } from '@/services/taskDependencies';
 // import { tasksService } from '@/services/tasks';
 // import { usersService } from '@/services/users';
-import { AssignmentRole, getTaskStatusByDisplayName, getTaskStatusDisplayName, getTaskStatusName, Project, Sprint, Task, TaskAssignment, TaskDependency, TaskStatus, User } from '@/types';
+import { AssignmentRole, getTaskStatusByDisplayName, getTaskStatusDisplayName, getTaskStatusName, Period, PeriodStaff, Staff, Task, TaskAssignment, TaskCategory, TaskDependency, TasksPeriod, TaskStatus, Team, User } from '@/types';
 import { getAllStatusColors } from '@/utils/taskColors';
 import {
   CloseOutlined,
-  DeleteOutlined,
   EditOutlined,
-  SaveOutlined,
-  UserOutlined
+  SaveOutlined
 } from '@ant-design/icons';
 import {
   App,
@@ -21,17 +19,102 @@ import {
   DatePicker,
   Form,
   Input,
-  List,
   Modal,
   Row,
   Select,
   Space,
+  Spin,
+  Table,
   Tabs,
   Tag,
   Typography
 } from 'antd';
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
+// Fetch teams for the Team select field
+const useTeams = () => {
+  const [teams, setTeams] = useState<Team[]>([]);
+  useEffect(() => {
+    fetch('/api/teams')
+      .then(res => res.json())
+      .then(data => setTeams(data?.data || []));
+  }, []);
+  return teams;
+};
+
+// --- TasksPeriodsTab component ---
+interface TasksPeriodsTabProps {
+  task: Task | null;
+}
+
+const TasksPeriodsTab: React.FC<TasksPeriodsTabProps> = ({ task }) => {
+  const [loading, setLoading] = useState(false);
+  const [tasksPeriods, setTasksPeriods] = useState<TasksPeriod[]>([]);
+  const [periodStaffs, setPeriodStaffs] = useState<PeriodStaff[]>([]);
+  const [staffs, setStaffs] = useState<Staff[]>([]);
+  const [periods, setPeriods] = useState<Period[]>([]);
+
+  useEffect(() => {
+    if (!task?.projectId) return;
+    setLoading(true);
+    Promise.all([
+      fetch('/api/tasksPeriod').then(res => res.json()),
+      fetch('/api/periodStaff').then(res => res.json()),
+      fetch('/api/staff').then(res => res.json()),
+      fetch('/api/periods').then(res => res.json())
+    ])
+      .then(([tasksPeriodData, periodStaffData, staffData, periodsData]) => {
+        // Filter by projectId
+        const filtered = (tasksPeriodData?.data || []).filter((tp: TasksPeriod) => tp.projectId === task.projectId);
+        setTasksPeriods(filtered);
+        setPeriodStaffs(periodStaffData?.data || []);
+        setStaffs(staffData?.data || []);
+        setPeriods(periodsData?.data || []);
+      })
+      .catch(() => {
+        setTasksPeriods([]);
+        setPeriodStaffs([]);
+        setStaffs([]);
+        setPeriods([]);
+      })
+      .finally(() => setLoading(false));
+  }, [task?.projectId]);
+
+  // Helper to get staff name from periodStaffId
+  const getStaffName = (periodStaffId: string) => {
+    const periodStaff = periodStaffs.find(ps => ps.id === periodStaffId);
+    if (!periodStaff) return '-';
+    const staff = staffs.find(s => s.id === periodStaff.staffId);
+    return staff ? staff.name : '-';
+  };
+
+  // Helper to get period name from periodStaffId
+  const getPeriodName = (periodStaffId: string) => {
+    const periodStaff = periodStaffs.find(ps => ps.id === periodStaffId);
+    if (!periodStaff) return '-';
+    const period = periods.find(p => p.id === periodStaff.periodId);
+    return period ? period.name : '-';
+  };
+
+  const columns = [
+    { title: 'Período', dataIndex: 'periodStaffId', key: 'periodName', render: (id: string) => getPeriodName(id) },
+    { title: 'Task Number', dataIndex: 'taskNumber', key: 'taskNumber' },
+    { title: 'Task Hours', dataIndex: 'taskHours', key: 'taskHours' },
+    { title: 'Staff', dataIndex: 'periodStaffId', key: 'periodStaffId', render: (id: string) => getStaffName(id) },
+  ];
+
+  return (
+    <Spin spinning={loading}>
+      <Table
+        dataSource={tasksPeriods}
+        columns={columns}
+        rowKey="id"
+        pagination={{ pageSize: 5 }}
+        locale={{ emptyText: 'Nenhum registro encontrado para este projeto.' }}
+      />
+    </Spin>
+  );
+};
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -65,6 +148,7 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
   const [currentTab, setCurrentTab] = useState(activeTab);
 
   const statusColors = getAllStatusColors();
+  const teams = useTeams();
 
   useEffect(() => {
     if (visible) {
@@ -131,7 +215,10 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
         sprintId: task.sprintId,
         startDate: task.startDate ? dayjs(task.startDate) : null,
         endDate: task.endDate ? dayjs(task.endDate) : null,
-        isCompleted: isDone
+        isCompleted: isDone,
+        type: task.type,
+        category: task.category || TaskCategory.Desenvolvimento,
+        teamId: task.teamId || undefined
       });
       // Carregar atribuições e dependências via API interna
       const [assignmentsRes, dependenciesRes, allDependenciesRes] = await Promise.all([
@@ -177,7 +264,10 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
         projectId: values.projectId,
         sprintId: values.sprintId,
         startDate: values.startDate?.format('YYYY-MM-DD'),
-        endDate: values.endDate?.format('YYYY-MM-DD')
+        endDate: values.endDate?.format('YYYY-MM-DD'),
+        type: values.type,
+        category: values.category,
+        teamId: values.teamId
       };
       const res = await fetch(`/api/tasks?id=${task?.id}`, {
         method: 'PATCH',
@@ -312,6 +402,7 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
         </Button>
       ]}
     >
+
       <Tabs activeKey={currentTab} onChange={setCurrentTab}>
         <TabPane tab="Editar" key="edit">
           <Form form={form} layout="vertical">
@@ -335,6 +426,50 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
               <Col span={24}>
                 <Form.Item name="description" label="Descrição">
                   <TextArea rows={3} placeholder="Descrição da tarefa" />
+                </Form.Item>
+              </Col>
+            </Row>
+
+
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="type"
+                  label="Tipo"
+                  rules={[{ required: true, message: 'Por favor, selecione o tipo' }]}
+                >
+                  <Select placeholder="Selecione o tipo">
+                    <Option value="task">Tarefa</Option>
+                    <Option value="milestone">Marco</Option>
+                    <Option value="project">Projeto</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="category"
+                  label="Categoria"
+                  rules={[{ required: true, message: 'Por favor, selecione a categoria' }]}
+                >
+                  <Select placeholder="Selecione a categoria">
+                    <Option value={TaskCategory.Melhoria}>Melhoria</Option>
+                    <Option value={TaskCategory.Desenvolvimento}>Desenvolvimento</Option>
+                    <Option value={TaskCategory.Correcao}>Correção</Option>
+                    <Option value={TaskCategory.Hotfix}>Hotfix</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="teamId"
+                  label="Equipe"
+                  rules={[{ required: false }]}
+                >
+                  <Select placeholder="Selecione a equipe">
+                    {teams.map((team) => (
+                      <Option key={team.id} value={team.id}>{team.name}</Option>
+                    ))}
+                  </Select>
                 </Form.Item>
               </Col>
             </Row>
@@ -400,6 +535,25 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
               </Col>
             </Row>
 
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="startDate"
+                  label="Data de Início"
+                >
+                  <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="endDate"
+                  label="Data de Fim"
+                >
+                  <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
+                </Form.Item>
+              </Col>
+            </Row>
+
             {isProjectType && (
               <Row gutter={16} style={{ marginBottom: 16 }}>
                 <Col span={24}>
@@ -429,56 +583,6 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
             )}
 
           </Form>
-        </TabPane>
-
-        <TabPane tab="Equipe" key="team">
-          <Card size="small" style={{ marginBottom: 16 }}>
-            <Title level={5}>
-              <UserOutlined /> Atribuir Usuário
-            </Title>
-            <Select
-              placeholder="Selecione um usuário para atribuir"
-              style={{ width: '100%' }}
-              onSelect={(value: string | undefined) => {
-                if (value) handleAssignUser(value);
-              }}
-              value={undefined}
-            >
-              {availableUsers.map(user => (
-                <Option key={user.id} value={user.id}>
-                  {user.name} - {user.email}
-                </Option>
-              ))}
-            </Select>
-          </Card>
-
-          <Card size="small">
-            <Title level={5}>Equipe Atribuída</Title>
-            <List
-              dataSource={assignmentsWithUsers}
-              renderItem={(assignment) => (
-                <List.Item
-                  actions={[
-                    <Button
-                      key="remove"
-                      type="text"
-                      danger
-                      icon={<DeleteOutlined />}
-                      onClick={() => handleRemoveAssignment(assignment.id)}
-                    />
-                  ]}
-                >
-                  <List.Item.Meta
-                    avatar={<UserOutlined />}
-                    title={assignment.user?.name || 'Usuário'}
-                    description={assignment.user?.email}
-                  />
-                  <Tag>{assignment.user?.role}</Tag>
-                </List.Item>
-              )}
-              locale={{ emptyText: 'Nenhum usuário atribuído' }}
-            />
-          </Card>
         </TabPane>
 
         <TabPane tab="Dependências" key="dependencies">
@@ -570,7 +674,13 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
             </Col>
           </Row>
         </TabPane>
+
+        <TabPane tab="Tasks" key="tasks">
+          {/* TasksPeriods Table */}
+          <TasksPeriodsTab task={task} />
+        </TabPane>
       </Tabs>
     </Modal>
-  );
-};
+
+  )
+}

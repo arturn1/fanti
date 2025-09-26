@@ -1,18 +1,18 @@
 "use client";
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { Table, Button, Modal, Form, Input, Space, Popconfirm, App, Typography, Card, Row, Col, Select, DatePicker, Descriptions, InputNumber, List, Tag } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, CalendarOutlined, EyeOutlined, LineChartOutlined } from '@ant-design/icons';
+import { CalendarOutlined, DeleteOutlined, EditOutlined, EyeOutlined, LineChartOutlined, PlusOutlined } from '@ant-design/icons';
+import { App, Button, Card, Col, DatePicker, Descriptions, Form, Input, InputNumber, Modal, Popconfirm, Row, Select, Space, Table, Tag, Typography } from 'antd';
 import dayjs from 'dayjs';
-import { Staff, PeriodStaff, TasksPeriod, Period, Project } from '../../types';
-import { useOrganization } from '../../hooks/useOrganization';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useModals } from '../../hooks/useModals';
+import { useOrganization } from '../../hooks/useOrganization';
+import { Period, PeriodStaff, Project, Staff, TasksPeriod } from '../../types';
 
 const { Text } = Typography;
 const { Option } = Select;
 
 export default function PeriodsPage() {
     const { message } = App.useApp();
-    
+
     // Data states
     const [periods, setPeriods] = useState<Period[]>([]);
     const [staffs, setStaffs] = useState<Staff[]>([]);
@@ -31,20 +31,20 @@ export default function PeriodsPage() {
     }, []);
     const [loading, setLoading] = useState(false);
     const [initialDataLoaded, setInitialDataLoaded] = useState(false);
-    
+
     // Form and search
     const [form] = Form.useForm();
     const [searchText, setSearchText] = useState('');
-    
+
     // View state for transitions
     const [organizingPeriod, setOrganizingPeriod] = useState<Period | null>(null);
-    
+
     // Custom hooks
     const modalsHook = useModals();
     const organizationHook = useOrganization(
-        periodStaffs, 
-        tasksPeriod, 
-        message, 
+        periodStaffs,
+        tasksPeriod,
+        message,
         modalsHook.modalData.organizingPeriod || undefined,
         () => {
             // Refresh data after organization changes
@@ -52,7 +52,7 @@ export default function PeriodsPage() {
             fetchTasksPeriod();
         }
     );
-    
+
     // Utility functions
     const getTaskColor = useCallback((hours: number) => {
         if (hours < 8) return 'blue';
@@ -67,16 +67,17 @@ export default function PeriodsPage() {
         const pastDaysOfYear = (now.getTime() - firstDayOfYear.getTime()) / 86400000;
         return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
     }, []);
+    // Calculate period metrics for viewing modal
     const periodMetrics = useMemo(() => {
         if (!modalsHook.modalData.viewingPeriod) return null;
 
         const periodId = modalsHook.modalData.viewingPeriod.id;
-        
+
         // Horas totais no período (soma de totalHours de todos os PeriodStaff do período)
         const totalPeriodHours = periodStaffs
             .filter(ps => ps.periodId === periodId)
             .reduce((sum, ps) => sum + ps.totalHours, 0);
-        
+
         // Horas atribuídas (soma de taskHours de todas as TasksPeriod do período)
         const assignedHours = tasksPeriod
             .filter(tp => {
@@ -85,13 +86,13 @@ export default function PeriodsPage() {
                 return relatedPeriodStaff?.periodId === periodId;
             })
             .reduce((sum, tp) => sum + tp.taskHours, 0);
-        
+
         // Horas restantes (total - atribuídas)
         const remainingHours = totalPeriodHours - assignedHours;
-        
+
         // Percentual de utilização
         const utilizationPercentage = totalPeriodHours > 0 ? (assignedHours / totalPeriodHours) * 100 : 0;
-        
+
         return {
             totalPeriodHours,
             assignedHours,
@@ -142,12 +143,12 @@ export default function PeriodsPage() {
 
     const fetchPeriods = useCallback(async () => {
         if (staffs.length === 0) return;
-        
+
         setLoading(true);
         try {
             const res = await fetch('/api/periods');
             const data = await res.json();
-            
+
             // Join staffs by PeriodStaff relationship
             const periodsWithStaffs = (data?.data || []).map((period: Period) => {
                 const relatedStaffIds = periodStaffs.filter(ps => ps.periodId === period.id).map(ps => ps.staffId);
@@ -202,17 +203,17 @@ export default function PeriodsPage() {
     const handleView = useCallback(async (period: Period) => {
         // Refresh all data to ensure most up-to-date information
         await refreshAllData();
-        
+
         // Get the fresh period data from the updated periods list
         const freshPeriods = await fetch('/api/periods').then(res => res.json()).then(data => data?.data || []);
         const updatedPeriod = freshPeriods.find((p: Period) => p.id === period.id);
-        
+
         if (updatedPeriod) {
             // Join with staffs data
             const relatedStaffIds = periodStaffs.filter(ps => ps.periodId === updatedPeriod.id).map(ps => ps.staffId);
             const staffsList = relatedStaffIds.map(id => staffs.find(s => s.id === id)).filter(Boolean);
             const periodWithStaffs = { ...updatedPeriod, staffs: staffsList };
-            
+
             modalsHook.openViewModal(periodWithStaffs);
         } else {
             // Fallback to original period if not found
@@ -223,17 +224,17 @@ export default function PeriodsPage() {
     const handleOrg = useCallback(async (period: Period) => {
         // Refresh all data before opening organization modal
         await refreshAllData();
-        
+
         // Get the fresh period data from the updated periods list
         const freshPeriods = await fetch('/api/periods').then(res => res.json()).then(data => data?.data || []);
         const updatedPeriod = freshPeriods.find((p: Period) => p.id === period.id);
-        
+
         if (updatedPeriod) {
             // Join with staffs data
             const relatedStaffIds = periodStaffs.filter(ps => ps.periodId === updatedPeriod.id).map(ps => ps.staffId);
             const staffsList = relatedStaffIds.map(id => staffs.find(s => s.id === id)).filter(Boolean);
             const periodWithStaffs = { ...updatedPeriod, staffs: staffsList };
-            
+
             setOrganizingPeriod(periodWithStaffs);
             organizationHook.initializeOrgData(periodWithStaffs);
             modalsHook.openOrganizationModal(periodWithStaffs);
@@ -269,14 +270,20 @@ export default function PeriodsPage() {
             };
             const payload = modalsHook.modalData.editingPeriod ? basePayload : { ...basePayload, Duration: duration };
             if (modalsHook.modalData.editingPeriod) {
-                await fetch(`/api/periods`, {
+                const response = await fetch(`/api/periods`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ ...payload, Id: modalsHook.modalData.editingPeriod.id })
                 });
+                const updated = await response.json();
                 message.success('Período atualizado!');
-                // For updates, refresh all data to ensure relationships are updated
-                await refreshAllData();
+                setPeriods(prev =>
+                    prev.map(p =>
+                        modalsHook.modalData.editingPeriod && p.id === modalsHook.modalData.editingPeriod.id
+                            ? { ...p, ...updated.data }
+                            : p
+                    )
+                );
             } else {
                 const response = await fetch(`/api/periods`, {
                     method: 'POST',
@@ -285,13 +292,13 @@ export default function PeriodsPage() {
                 });
                 const newPeriod = await response.json();
                 message.success('Período criado!');
-                
+
                 // Add the new period directly to the state
                 console.log('New period created:', newPeriod);
                 setPeriods(prev => [...prev, newPeriod.data || newPeriod]);
             }
             modalsHook.closeModal('createEdit');
-            
+
             form.resetFields();
         } catch {
             message.error('Erro ao salvar período');
@@ -371,7 +378,7 @@ export default function PeriodsPage() {
                     </Col>
                 </Row>
             </Card>
-            
+
             {/* Tabela de períodos */}
             <Card>
                 <Table columns={columns} dataSource={filteredPeriods} rowKey="id" loading={loading} />
@@ -455,7 +462,7 @@ export default function PeriodsPage() {
                                 {modalsHook.modalData.viewingPeriod.staffs && modalsHook.modalData.viewingPeriod.staffs.length > 0 ? modalsHook.modalData.viewingPeriod.staffs.map((s: Staff) => s.name).join(', ') : '-'}
                             </Descriptions.Item>
                         </Descriptions>
-                        
+
                         {periodMetrics && (
                             <Descriptions title="Métricas de Horas" bordered column={2} style={{ marginTop: 24 }}>
                                 <Descriptions.Item label="Horas Totais no Período">
