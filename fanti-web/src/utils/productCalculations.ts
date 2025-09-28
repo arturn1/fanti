@@ -18,13 +18,6 @@ export const parseSprintStatus = (status: SprintStatus | string): SprintStatus =
   return status;
 };
 
-export const parseTaskStatus = (status: TaskStatus | string): TaskStatus => {
-  if (typeof status === 'string') {
-    return parseInt(status, 10) as TaskStatus;
-  }
-  return status;
-};
-
 // Função centralizada para calcular dados dos produtos
 export const calculateProductData = (
   projects: Project[],
@@ -81,15 +74,13 @@ export const calculateProductData = (
     );
 
     productData.totalTasks = sprintTasks.length;
-    productData.completedTasks = sprintTasks.filter(task =>
-      task.status === 'Done' || task.status === TaskStatus.Done || task.progress === 100
+    productData.completedTasks = sprintTasks.filter(task => task.status === TaskStatus.Done || task.progress === 100
     ).length;
 
     // 3. PROGRESSO GERAL: Baseado APENAS nas tarefas do tipo 'project' dos sprints ativos, excluindo as completas
     const projectTasks = productData.tasks.filter(task =>
       task.type == 'project' &&
       task.sprintId && sprintIds.includes(task.sprintId) && // APENAS sprints ativos
-      task.status !== 'Done' &&
       task.status !== TaskStatus.Done &&
       task.progress !== 100
     );

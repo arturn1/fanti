@@ -1,6 +1,6 @@
 'use client';
 
-import { CreateSprintCommand, CreateTaskDto, Project, Sprint } from '@/types';
+import { CreateSprintCommand, CreateTaskCommand, Project, Sprint } from '@/types';
 import { PlusOutlined } from '@ant-design/icons';
 import {
   Button,
@@ -71,20 +71,16 @@ export default function CreateSprintModal({ visible, onClose, onSuccess }: Creat
       }
 
       // Criar automaticamente uma task do tipo "project" com os dados do sprint
-      const taskData: CreateTaskDto = {
+      const taskData: CreateTaskCommand = {
         ProjectId: values.projectId || "00000000-0000-0000-0000-000000000000",
         SprintId: createdSprint.id, // Usar o ID do sprint criado
         Title: values.name, // Nome do sprint como título da task
         Description: values.description ?
-          `Sprint: ${values.name}\n\nObjetivo: ${values.goal}\n\nDescrição: ${values.description}` :
-          `Sprint: ${values.name}\n\nObjetivo: ${values.goal}`,
-        Priority: "2", // Prioridade média
-        Status: "1", // Status inicial (Backlog)
-        Type: "project", // Tipo projeto (milestone)
-        StartDate: values.dateRange[0].format('YYYY-MM-DD'),
-        EndDate: values.dateRange[1].format('YYYY-MM-DD'),
-        Progress: 0,
-        IsDisabled: false,
+          `Sprint: ${values.name}\nObjetivo: ${values.goal}\nDescrição: ${values.description}` :
+          `Sprint: ${values.name}\nObjetivo: ${values.goal}`,
+        Status: 1, // Status inicial (Backlog)
+        StartDate: values.dateRange[0].toISOString(),
+        EndDate: values.dateRange[1].toISOString(),
       };
 
       // Criar a task do tipo projeto

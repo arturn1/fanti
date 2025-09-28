@@ -158,7 +158,6 @@ export class GanttHandlers {
             : parentEnd.format('YYYY-MM-DD');     // Manter fim original
         }
 
-        const estimatedHours = dayjs(newEndDate).diff(dayjs(newStartDate), 'hour');
 
         await fetch(`/api/tasks/${parentTask?.id}`, {
           method: 'PATCH',
@@ -166,7 +165,6 @@ export class GanttHandlers {
           body: JSON.stringify({
             StartDate: newStartDate,
             EndDate: newEndDate,
-            EstimatedHours: estimatedHours
           })
         });
 
@@ -176,14 +174,13 @@ export class GanttHandlers {
           body: JSON.stringify({
             StartDate: newStartDate,
             EndDate: newEndDate,
-            EstimatedHours: estimatedHours,
           })
         });
 
         // Atualizar o estado local da tarefa pai
         this.config.setTasks(currentTasks => currentTasks.map(t =>
           t.id === parentTask.id
-            ? { ...t, startDate: newStartDate, endDate: newEndDate, estimatedHours }
+            ? { ...t, startDate: newStartDate, endDate: newEndDate }
             : t
         ));
 
@@ -209,7 +206,6 @@ export class GanttHandlers {
 
       const startDate = dayjs(task.start).format('YYYY-MM-DD');
       const endDate = dayjs(task.end).format('YYYY-MM-DD');
-      const estimatedHours = dayjs(task.end).diff(dayjs(task.start), 'hour');
 
       // Verificar se é um projeto e sincronizar datas da sprint
       if (realTask?.type === 'project' && realTask?.sprintId &&
@@ -226,7 +222,6 @@ export class GanttHandlers {
               ...t,
               startDate,
               endDate,
-              estimatedHours,
               progress: task.progress || t.progress || 0,
               updated: new Date().toISOString() // Marcar como atualizado
             }
@@ -238,7 +233,7 @@ export class GanttHandlers {
       // Usar debounce para a atualização do backend
       this.config.debounceUpdate(
         task.id,
-        { startDate, endDate, estimatedHours, progress: task.progress || 0 },
+        { startDate, endDate, progress: task.progress || 0 },
         async () => {
 
           await fetch(`/api/tasks/${task?.id}`, {
@@ -247,7 +242,6 @@ export class GanttHandlers {
             body: JSON.stringify({
               StartDate: startDate,
               EndDate: endDate,
-              EstimatedHours: estimatedHours,
             })
           });
         }

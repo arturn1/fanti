@@ -50,9 +50,9 @@ export default function ProjectsPage() {
   const loadProjects = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/projects');
-      const data = await res.data.data;
-      setProjects(data || []);
+      const res = await fetch('/api/projects');
+      const data = await res.json();
+      setProjects(data?.data || []);
     } catch (error) {
       message.error('Erro ao carregar produtos');
     } finally {
@@ -66,8 +66,8 @@ export default function ProjectsPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      const res = await api.delete(`/projects/${id}`);
-      if (res.data.ok) {
+      const res = await fetch(`api/projects/${id}`);
+      if (res.ok) {
         message.success('Produto excluído com sucesso!');
         loadProjects();
       } else {

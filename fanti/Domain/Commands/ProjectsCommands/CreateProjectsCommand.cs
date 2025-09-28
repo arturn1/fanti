@@ -1,4 +1,5 @@
 using Domain.Commands.Contracts;
+using Domain.Enum;
 using Domain.Validation;
 
 namespace Domain.Commands
@@ -6,7 +7,7 @@ namespace Domain.Commands
 
     public class CreateProjectsCommand : ValidatableTypes, ICommand
     {
-        public CreateProjectsCommand(string Name, string Description, DateTime StartDate, DateTime EndDate, string Status, string? url)
+        public CreateProjectsCommand(string Name, string Description, DateTime StartDate, DateTime EndDate, ProjectStatus Status, string? url)
         {
 
             this.Name = Name;
@@ -21,7 +22,7 @@ namespace Domain.Commands
         public string Description { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
-        public string Status { get; set; }
+        public ProjectStatus Status { get; set; }
         public string? url { get; set; }
 
 

@@ -1,3 +1,6 @@
+using System.ComponentModel.DataAnnotations;
+using System.Reflection;
+
 namespace Domain.Enum
 {
     public enum UserRole
@@ -11,18 +14,10 @@ namespace Domain.Enum
 
     public enum ProjectStatus
     {
-        Active = 1,
-        Completed = 2,
-        OnHold = 3,
-        Cancelled = 4
-    }
-
-    public enum ProjectRole
-    {
-        ProductOwner = 1,
-        ScrumMaster = 2,
-        Developer = 3,
-        Stakeholder = 4
+        Active,
+        Completed,
+        OnHold,
+        Cancelled
     }
 
     public enum SprintStatus
@@ -36,49 +31,50 @@ namespace Domain.Enum
 
     public enum TaskStatus
     {
-        Backlog = 1,
-        ToDo = 2,
-        InProgress = 3,
-        InReview = 4,
-        Testing = 5,
-        Done = 6,
-        Blocked = 7
-    }
-
-    public enum TaskPriority
-    {
-        Low = 1,
-        Medium = 2,
-        High = 3,
-        Critical = 4
+        Backlog,
+        ToDo,
+        InProgress,
+        InReview,
+        Testing,
+        Done
     }
 
     public enum TaskType
     {
-        Epic = 1,
-        Story = 2,
-        Task = 3,
-        Bug = 4,
-        Improvement = 5,
-        SubTask = 6,
-        Milestone = 7,
-        Project = 8
+        [Display(Name = "task")]
+        Task,
+        [Display(Name = "milestone")]
+        Milestone,
+        [Display(Name = "project")]
+        Project
     }
 
-    public enum DependencyType
+    public enum TaskCategory
     {
-        FinishToStart = 1,
-        StartToStart = 2,
-        FinishToFinish = 3,
-        StartToFinish = 4
+        Improvement,
+        Development,
+        Bug,
+        HotFix,
     }
 
-    public enum AssignmentRole
+}
+
+public static class EnumExtensions
+{
+    public static int ToInt(this Enum value)
     {
-        Owner = 1,
-        Contributor = 2,
-        Reviewer = 3,
-        Observer = 4
+        return Convert.ToInt32(value);
     }
 
+    public static string GetDisplayName(this Enum value)
+    {
+        var member = value.GetType().GetMember(value.ToString());
+        if (member.Length > 0)
+        {
+            var attr = member[0].GetCustomAttribute<DisplayAttribute>();
+            if (attr != null)
+                return attr.Name;
+        }
+        return value.ToString();
+    }
 }

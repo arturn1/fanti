@@ -1,6 +1,5 @@
 using Domain.Commands.Contracts;
 using Domain.Validation;
-using System;
 
 namespace Domain.Commands
 {
@@ -15,7 +14,6 @@ namespace Domain.Commands
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public decimal? Progress { get; set; } // 0-100
-        public decimal? EstimatedHours { get; set; }
         public string? Description { get; set; }
         public string? Title { get; set; }  
 

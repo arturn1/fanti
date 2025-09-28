@@ -1,6 +1,6 @@
 'use client';
 
-import { getTaskStatusByDisplayName, getTaskStatusDisplayName, getTaskStatusName, Period, PeriodStaff, Staff, Task, TaskCategory, TaskDependency, TasksPeriod, TaskStatus, Team, User } from '@/types';
+import { Period, PeriodStaff, Staff, Task, TaskCategory, TaskDependency, TasksPeriod, TaskStatus, Team, User } from '@/types';
 import { isRangeOverlap } from '@/utils/dateRange';
 import { getAllStatusColors } from '@/utils/taskColors';
 import {
@@ -190,8 +190,8 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
   const calculateProjectStatus = (childTasks: Task[]): TaskStatus => {
     if (!childTasks || childTasks.length === 0) return TaskStatus.ToDo;
 
-    const allDone = childTasks.every(child => child.status === 'Done' || child.status === TaskStatus.Done);
-    const anyInProgress = childTasks.some(child => child.status === 'InProgress' || child.status === TaskStatus.InProgress);
+    const allDone = childTasks.every(child => child.status === TaskStatus.Done);
+    const anyInProgress = childTasks.some(child => child.status === TaskStatus.InProgress);
 
     if (allDone) return TaskStatus.Done;
     if (anyInProgress) return TaskStatus.InProgress;
@@ -216,24 +216,18 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
   const loadTaskData = async () => {
     if (!task) return;
     try {
-      const statusToUse = calculatedStatus || task.status;
-      const statusDisplayName = typeof statusToUse === 'string'
-        ? getTaskStatusDisplayName(statusToUse)
-        : getTaskStatusDisplayName(getTaskStatusName(statusToUse));
-      const isDone = (typeof statusToUse === 'string' && statusToUse === 'Done') ||
-        (typeof statusToUse === 'number' && statusToUse === TaskStatus.Done);
+
       form.setFieldsValue({
         name: task.title,
         description: task.description,
-        status: statusDisplayName,
+        status: task.status,
         progress: calculatedProgress,
         projectId: task.projectId,
         sprintId: task.sprintId,
         startDate: task.startDate ? dayjs(task.startDate) : null,
         endDate: task.endDate ? dayjs(task.endDate) : null,
-        isCompleted: isDone,
         type: task.type,
-        category: task.category || TaskCategory.Desenvolvimento,
+        category: task.category || TaskCategory.Development,
         teamId: task.teamId || undefined
       });
       // Carregar atribuições e dependências via API interna
@@ -266,7 +260,7 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
     try {
       setLoading(true);
       const values = await form.validateFields();
-      const backendStatus = getTaskStatusByDisplayName(values.status);
+      const backendStatus = values.status;
       const updateData = {
         id: task.id,
         title: values.name,
@@ -410,9 +404,9 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
                   rules={[{ required: true, message: 'Por favor, selecione a categoria' }]}
                 >
                   <Select placeholder="Selecione a categoria">
-                    <Option value={TaskCategory.Melhoria}>Melhoria</Option>
-                    <Option value={TaskCategory.Desenvolvimento}>Desenvolvimento</Option>
-                    <Option value={TaskCategory.Correcao}>Correção</Option>
+                    <Option value={TaskCategory.Improvement}>Melhoria</Option>
+                    <Option value={TaskCategory.Development}>Desenvolvimento</Option>
+                    <Option value={TaskCategory.BugFix}>Correção</Option>
                     <Option value={TaskCategory.Hotfix}>Hotfix</Option>
                   </Select>
                 </Form.Item>
@@ -523,11 +517,11 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
                       </Col>
                       <Col span={8}>
                         <Text strong>Concluídas: </Text>
-                        <Text>{childTasks.filter(t => t.status == 'Done' || t.status == TaskStatus.Done).length}</Text>
+                        <Text>{childTasks.filter(t => t.status == TaskStatus.Done).length}</Text>
                       </Col>
                       <Col span={8}>
                         <Text strong>Em Progresso: </Text>
-                        <Text>{childTasks.filter(t => t.status == 'InProgress' || t.status == TaskStatus.InProgress).length}</Text>
+                        <Text>{childTasks.filter(t => t.status == TaskStatus.InProgress).length}</Text>
                       </Col>
                     </Row>
                     <div style={{ marginTop: 8 }}>

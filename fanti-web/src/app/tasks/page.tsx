@@ -27,9 +27,8 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { CreateSubtaskModal } from '@/app/tasks/components/CreateSubtaskModal';
-import CreateTaskModal from '@/app/tasks/components/CreateTaskModal';
 import { UnifiedTaskModal } from '@/app/tasks/components/UnifiedTaskModal';
-import { Project, Sprint, Task, TaskDependency, Team } from '@/types';
+import { Project, Sprint, Task, TaskDependency, TaskStatus, Team } from '@/types';
 import { getColorVariations, getTaskColorByStatus } from '@/utils/taskColors';
 import dayjs from 'dayjs';
 
@@ -224,13 +223,13 @@ function TasksPageContent() {
       let progress = task.progress || 0;
       if (progress === 0) {
         switch (task.status) {
-          case 'Done':
+          case TaskStatus.Done:
             progress = 100;
             break;
-          case 'InProgress':
+          case TaskStatus.InProgress:
             progress = 50;
             break;
-          case 'ToDo':
+          case TaskStatus.ToDo:
             progress = 10;
             break;
           default:
@@ -429,13 +428,6 @@ function TasksPageContent() {
           <div style={{ textAlign: 'center', padding: '100px 0', color: '#999' }}>
             <CalendarOutlined style={{ fontSize: 48, marginBottom: 16 }} />
             <p>Nenhuma tarefa encontrada</p>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => setCreateModalVisible(true)}
-            >
-              Criar Primeira Tarefa
-            </Button>
           </div>
         ) : (
           <>
@@ -479,16 +471,6 @@ function TasksPageContent() {
           </>
         )}
       </Card>
-
-      <CreateTaskModal
-        visible={createModalVisible}
-        onClose={() => setCreateModalVisible(false)}
-        onSuccess={() => {
-          loadData();
-          setCreateModalVisible(false);
-        }}
-      />
-
 
       <UnifiedTaskModal
         task={selectedTaskForUnified}

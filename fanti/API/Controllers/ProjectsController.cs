@@ -25,7 +25,7 @@ namespace API.Controllers
             _ProjectsRepository = ProjectsRepository;
             _ProjectVersionRepository = ProjectVersionRepository;
         }
-        
+
         [HttpGet("with-versions")]
         public async Task<IActionResult> GetAllWithVersionsAsync()
         {

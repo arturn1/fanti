@@ -1,6 +1,6 @@
 'use client';
 
-import { CreateTaskDto, getTaskPriorityName, getTaskStatusByDisplayName, getTaskStatusDisplayName, getTaskStatusName, Task, TaskCategory, TaskPriority, Team } from '@/types';
+import {  CreateTaskCommand, Task, TaskCategory, Team } from '@/types';
 import { getAllStatusColors } from '@/utils/taskColors';
 import {
   App,
@@ -14,6 +14,8 @@ import {
 } from 'antd';
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
+const { RangePicker } = DatePicker;
+
 // Fetch teams for the Team select field
 const useTeams = () => {
   const [teams, setTeams] = useState<Team[]>([]);
@@ -49,7 +51,7 @@ export const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
   useEffect(() => {
     if (visible) {
       form.setFieldsValue({
-        status: getTaskStatusDisplayName('ToDo'),
+        status: 0,
         type: "task",
       });
     }
@@ -60,24 +62,18 @@ export const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
 
     try {
       setLoading(true);
-      const taskData: CreateTaskDto = {
+      const taskData: CreateTaskCommand = {
         ProjectId: parentTask.projectId,
         SprintId: parentTask.sprintId,
         ParentTaskId: parentTask.id,
-        AssigneeId: undefined,
         Title: values.title,
         Description: values.description || '',
-        Priority: getTaskPriorityName(TaskPriority.Medium),
-        Status: getTaskStatusByDisplayName(values.status),
+        Status: values.status,
         Type: values.type,
         Category: values.category,
-        EstimatedHours: 0,
-        StartDate: values.startDate ? dayjs(values.startDate).format('YYYY-MM-DD') : undefined,
-        EndDate: values.endDate ? dayjs(values.endDate).format('YYYY-MM-DD') : undefined,
+        StartDate: values.dateRange ? values.dateRange[0].toISOString() : new Date().toISOString(),
+        EndDate: values.dateRange ? values.dateRange[1].toISOString() : "",
         Progress: 0,
-        Color: undefined,
-        IsDisabled: values.isDisabled || false,
-        HideChildren: values.hideChildren || false,
         TeamId: values.teamId,
       };
       await fetch(`/api/tasks`, {
@@ -89,7 +85,6 @@ export const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
       form.resetFields();
       onSuccess();
     } catch (error) {
-      console.error('Erro ao criar subtarefa:', error);
       message.error('Erro ao criar subtarefa');
     } finally {
       setLoading(false);
@@ -164,7 +159,7 @@ export const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
         >
           <Select placeholder="Selecione o status">
             {getAllStatusColors().map(({ status, name }) => (
-              <Option key={status} value={getTaskStatusName(status)}>
+              <Option key={status} value={status}>
                 {name}
               </Option>
             ))}
@@ -192,9 +187,9 @@ export const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
             rules={[{ required: true, message: 'Por favor, selecione a categoria' }]}
           >
             <Select placeholder="Selecione a categoria">
-              <Option value={TaskCategory.Melhoria}>Melhoria</Option>
-              <Option value={TaskCategory.Desenvolvimento}>Desenvolvimento</Option>
-              <Option value={TaskCategory.Correcao}>Correção</Option>
+              <Option value={TaskCategory.Improvement}>Melhoria</Option>
+              <Option value={TaskCategory.Development}>Desenvolvimento</Option>
+              <Option value={TaskCategory.BugFix}>Correção</Option>
               <Option value={TaskCategory.Hotfix}>Hotfix</Option>
             </Select>
           </Form.Item>
@@ -214,26 +209,15 @@ export const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
 
         <Space.Compact style={{ display: 'flex', marginBottom: 16 }}>
           <Form.Item
-            name="startDate"
-            label="Data de Início"
+            name="dateRange"
+            label="Período do Produto (Opcional)"
             style={{ flex: 1, marginRight: 8 }}
           >
-            <DatePicker
-              style={{ width: '100%' }}
-              placeholder="Data de início"
+            <RangePicker
+              style={{ width: '100%', flex: 1 }}
               format="DD/MM/YYYY"
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="endDate"
-            label="Data de Fim"
-            style={{ flex: 1 }}
-          >
-            <DatePicker
-              style={{ width: '100%' }}
-              placeholder="Data de fim"
-              format="DD/MM/YYYY"
+              placeholder={['Data de início', 'Data de fim']}
+              disabledDate={(current) => current && current < dayjs().startOf('day')}
             />
           </Form.Item>
         </Space.Compact>

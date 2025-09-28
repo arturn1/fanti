@@ -29,15 +29,23 @@ namespace Domain.Handlers
         public async Task<ICommandResult> Handle(CreateTasksCommand command)
         {
 
-            command.IsCommandValid();
-            if (!command.isValid)
+            try
             {
-                return new CommandResult(command.Errors, HttpStatusCode.BadRequest);
+                command.IsCommandValid();
+                if (!command.isValid)
+                {
+                    return new CommandResult(command.Errors, HttpStatusCode.BadRequest);
+                }
+                TasksEntity entity = new();
+                _mapper.Map(command, entity);
+                await _TasksRepository.PostAsync(entity);
+                return new CommandResult(entity, HttpStatusCode.Created);
             }
-            TasksEntity entity = new();
-            _mapper.Map(command, entity);
-            await _TasksRepository.PostAsync(entity);
-            return new CommandResult(entity, HttpStatusCode.Created);
+            catch (System.Exception e)
+            {
+                
+                throw e;
+            }
 
         }
         public async Task<ICommandResult> Handle(UpdateTasksCommand command)
@@ -96,21 +104,15 @@ namespace Domain.Handlers
                 ProjectId = parentTask.ProjectId,
                 SprintId = parentTask.SprintId,
                 ParentTaskId = command.ParentTaskId,
-                AssigneeId = parentTask.AssigneeId, // Herda assignee da tarefa pai
                 Title = command.Title,
                 Description = command.Description,
-                Priority = command.Priority.ToString(),
-                Status = command.Status.ToString(),
-                EstimatedHours = command.EstimatedHours,
+                Status = command.Status,
                 StartDate = command.StartDate,
                 EndDate = command.EndDate,
                 Progress = command.Progress,
-                Assignees = command.Assignees,
-                Dependencies = command.Dependencies,
-                Color = command.Color ?? parentTask.Color, // Herda cor se não especificada
-                IsDisabled = command.IsDisabled,
-                HideChildren = command.HideChildren,
-                Tags = command.Tags
+                Category = command.Category,
+                TeamId = command.TeamId,
+                Type = command.Type.GetDisplayName(), // Herda tipo da tarefa pai
             };
 
             await _TasksRepository.PostAsync(subtaskEntity);
@@ -174,7 +176,7 @@ namespace Domain.Handlers
             var averageProgress = (int)childTasks.Average(t => (decimal)t.Progress);
 
             // Determinar status baseado nos filhos
-            var newStatus = (int)CalculateParentStatus(childTasks);
+            var newStatus = CalculateParentStatus(childTasks);
 
             // Atualizar tarefa pai apenas se houve mudança
             bool hasChanges = false;
@@ -184,9 +186,9 @@ namespace Domain.Handlers
                 hasChanges = true;
             }
 
-            if (parentTask.Status != newStatus.ToString())
+            if (parentTask.Status != newStatus)
             {
-                parentTask.Status = newStatus.ToString();
+                parentTask.Status = newStatus;
                 hasChanges = true;
             }
 
@@ -205,8 +207,8 @@ namespace Domain.Handlers
             if (!children.Any()) return Domain.Enum.TaskStatus.ToDo;
 
             // Contar status dos filhos
-            var doneCount = children.Count(t => t.Status == Domain.Enum.TaskStatus.Done.ToString());
-            var inProgressCount = children.Count(t => t.Status == Domain.Enum.TaskStatus.InProgress.ToString());
+            var doneCount = children.Count(t => t.Status == Domain.Enum.TaskStatus.Done);
+            var inProgressCount = children.Count(t => t.Status == Domain.Enum.TaskStatus.InProgress);
             var totalCount = children.Count;
 
             // Se todos estão concluídos, pai fica concluído
