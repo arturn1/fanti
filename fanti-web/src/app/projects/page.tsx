@@ -1,38 +1,36 @@
 'use client';
 
-import CreateProjectModal from '@/components/CreateProjectModal';
-import EditProjectModal from '@/components/EditProjectModal';
-// import { projectsService } from '@/services/projects';
+import CreateProjectModal from '@/app/projects/components/CreateProjectModal';
+import EditProjectModal from '@/app/projects/components/EditProjectModal';
 import { Project, ProjectStatus } from '@/types';
 import {
   DeleteOutlined,
   EditOutlined,
   FilterOutlined,
   LinkOutlined,
-  MoreOutlined,
   PlusOutlined,
   SearchOutlined
 } from '@ant-design/icons';
-import type { MenuProps } from 'antd';
 import {
   Button,
   Card,
   Col,
-  Dropdown,
   Input,
   message,
   Popconfirm,
   Row,
   Select,
+  Space,
   Table,
   Tag,
   Tooltip,
-  Typography,
-  Space
+  Typography
 } from 'antd';
 import type { ColumnsType, TableProps } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
+import api from '@/services/api';
+
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -52,9 +50,9 @@ export default function ProjectsPage() {
   const loadProjects = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/projects');
-      const data = await res.json();
-      setProjects(data?.data || []);
+      const res = await api.get('/projects');
+      const data = await res.data.data;
+      setProjects(data || []);
     } catch (error) {
       message.error('Erro ao carregar produtos');
     } finally {
@@ -68,17 +66,14 @@ export default function ProjectsPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      const res = await fetch(`/api/projects?id=${id}`, {
-        method: 'DELETE',
-      });
-      if (res.ok) {
+      const res = await api.delete(`/projects/${id}`);
+      if (res.data.ok) {
         message.success('Produto excluído com sucesso!');
         loadProjects();
       } else {
         message.error('Erro ao excluir produto');
       }
     } catch (error) {
-      console.error('Erro ao excluir produto:', error);
       message.error('Erro ao excluir produto');
     }
   };
@@ -121,32 +116,6 @@ export default function ProjectsPage() {
 
     return matchesSearch && matchesStatus;
   });
-
-  const getActionMenuItems = (project: Project): MenuProps['items'] => [
-    {
-      key: 'edit',
-      label: 'Editar',
-      icon: <EditOutlined />,
-      onClick: () => handleEdit(project),
-    },
-    {
-      key: 'delete',
-      label: (
-        <Popconfirm
-          title="Excluir produto"
-          description="Tem certeza que deseja excluir este produto?"
-          onConfirm={() => handleDelete(project.id)}
-          okText="Sim"
-          cancelText="Não"
-          align={{ offset: [-50, -10] }}
-        >
-          Excluir
-        </Popconfirm>
-      ),
-      icon: <DeleteOutlined />,
-      danger: true,
-    },
-  ];
 
   const columns: ColumnsType<Project> = [
     {

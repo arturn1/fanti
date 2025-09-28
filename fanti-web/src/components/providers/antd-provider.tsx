@@ -31,6 +31,15 @@ export default function AntdProvider({
         token: {
           colorPrimary: '#1677ff',
         },
+        components: {
+          Carousel: {
+            arrowSize: 14,
+            arrowOffset:-15,
+            dotOffset: -8,
+            dotHeight: 6,
+            dotWidth: 6,
+          },
+        },
       }}
     >
       <App>

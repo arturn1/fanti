@@ -1,10 +1,7 @@
 'use client';
 
-// import { taskAssignmentsService } from '@/services/taskAssignments';
-// import { taskDependenciesService } from '@/services/taskDependencies';
-// import { tasksService } from '@/services/tasks';
-// import { usersService } from '@/services/users';
-import { AssignmentRole, getTaskStatusByDisplayName, getTaskStatusDisplayName, getTaskStatusName, Period, PeriodStaff, Staff, Task, TaskAssignment, TaskCategory, TaskDependency, TasksPeriod, TaskStatus, Team, User } from '@/types';
+import { getTaskStatusByDisplayName, getTaskStatusDisplayName, getTaskStatusName, Period, PeriodStaff, Staff, Task, TaskCategory, TaskDependency, TasksPeriod, TaskStatus, Team, User } from '@/types';
+import { isRangeOverlap } from '@/utils/dateRange';
 import { getAllStatusColors } from '@/utils/taskColors';
 import {
   CloseOutlined,
@@ -30,7 +27,11 @@ import {
   Typography
 } from 'antd';
 import dayjs from 'dayjs';
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import React, { useEffect, useState } from 'react';
+dayjs.extend(isSameOrAfter);
+dayjs.extend(isSameOrBefore);
 // Fetch teams for the Team select field
 const useTeams = () => {
   const [teams, setTeams] = useState<Team[]>([]);
@@ -64,8 +65,24 @@ const TasksPeriodsTab: React.FC<TasksPeriodsTabProps> = ({ task }) => {
       fetch('/api/periods').then(res => res.json())
     ])
       .then(([tasksPeriodData, periodStaffData, staffData, periodsData]) => {
-        // Filter by projectId
-        const filtered = (tasksPeriodData?.data || []).filter((tp: TasksPeriod) => tp.projectId === task.projectId);
+        // Filtrar usando os dados recebidos diretamente
+        const filtered = (tasksPeriodData?.data || []).filter((tp: TasksPeriod) => {
+          if (tp.projectId !== task.projectId) {
+            return false;
+          }
+          const periodStaff = (periodStaffData?.data || []).find((ps: PeriodStaff) => ps.id === tp.periodStaffId);
+          if (!periodStaff) {
+            return false;
+          }
+          const period = (periodsData?.data || []).find((p: Period) => p.id === periodStaff.periodId);
+          if (!period) {
+            return false;
+          }
+          if (!period.startDate || !period.endDate || !task.startDate || !task.endDate) {
+            return false;
+          }
+          return isRangeOverlap(period.startDate, period.endDate, task.startDate, task.endDate);
+        });
         setTasksPeriods(filtered);
         setPeriodStaffs(periodStaffData?.data || []);
         setStaffs(staffData?.data || []);
@@ -97,9 +114,9 @@ const TasksPeriodsTab: React.FC<TasksPeriodsTabProps> = ({ task }) => {
   };
 
   const columns = [
-    { title: 'Período', dataIndex: 'periodStaffId', key: 'periodName', render: (id: string) => getPeriodName(id) },
-    { title: 'Task Number', dataIndex: 'taskNumber', key: 'taskNumber' },
-    { title: 'Task Hours', dataIndex: 'taskHours', key: 'taskHours' },
+    { title: 'Sprint', dataIndex: 'periodStaffId', key: 'periodName', render: (id: string) => getPeriodName(id) },
+    { title: 'Número da tarefa', dataIndex: 'taskNumber', key: 'taskNumber' },
+    { title: 'Horas', dataIndex: 'taskHours', key: 'taskHours' },
     { title: 'Staff', dataIndex: 'periodStaffId', key: 'periodStaffId', render: (id: string) => getStaffName(id) },
   ];
 
@@ -142,7 +159,6 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
-  const [assignmentsWithUsers, setAssignmentsWithUsers] = useState<(TaskAssignment & { user: User })[]>([]);
   const [dependenciesWithTasks, setDependenciesWithTasks] = useState<(TaskDependency & { predecessorTask: Task })[]>([]);
   const [successorDependenciesWithTasks, setSuccessorDependenciesWithTasks] = useState<(TaskDependency & { successorTask: Task })[]>([]);
   const [currentTab, setCurrentTab] = useState(activeTab);
@@ -221,20 +237,15 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
         teamId: task.teamId || undefined
       });
       // Carregar atribuições e dependências via API interna
-      const [assignmentsRes, dependenciesRes, allDependenciesRes] = await Promise.all([
-        fetch(`/api/taskAssignments?taskId=${task.id}`),
+      const [dependenciesRes, allDependenciesRes] = await Promise.all([
         fetch(`/api/taskDependencies?taskId=${task.id}`),
         fetch('/api/taskDependencies')
       ]);
-      const [assignmentsData, dependenciesData, allDependencies] = await Promise.all([
-        assignmentsRes.json(),
+      const [dependenciesData, allDependencies] = await Promise.all([
         dependenciesRes.json(),
         allDependenciesRes.json()
       ]);
-      setAssignmentsWithUsers((assignmentsData?.data || []).map((assignment: TaskAssignment) => {
-        const user = users.find((u: User) => u.id === assignment.userId);
-        return { ...assignment, user: user! };
-      }));
+
       const predecessorDeps = (dependenciesData?.data || []).filter((dep: TaskDependency) => dep.successorTaskId === task.id);
       setDependenciesWithTasks(predecessorDeps.map((dependency: TaskDependency) => {
         const predecessorTask = tasks.find((t: Task) => t.id === dependency.predecessorTaskId);
@@ -257,6 +268,7 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
       const values = await form.validateFields();
       const backendStatus = getTaskStatusByDisplayName(values.status);
       const updateData = {
+        id: task.id,
         title: values.name,
         description: values.description,
         status: backendStatus,
@@ -269,8 +281,8 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
         category: values.category,
         teamId: values.teamId
       };
-      const res = await fetch(`/api/tasks?id=${task?.id}`, {
-        method: 'PATCH',
+      const res = await fetch(`/api/tasks/${task.id}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updateData)
       });
@@ -290,56 +302,6 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
     }
   };
 
-  const handleAssignUser = async (userId: string) => {
-    if (!task) return;
-    try {
-      const res = await fetch('/api/taskAssignments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          taskId: task.id,
-          userId,
-          role: AssignmentRole.Assignee
-        })
-      });
-      if (res.ok) {
-        const updatedRes = await fetch(`/api/taskAssignments?taskId=${task.id}`);
-        const updatedAssignments = await updatedRes.json();
-        setAssignmentsWithUsers((updatedAssignments?.data || []).map((assignment: TaskAssignment) => {
-          const user = users.find((u: User) => u.id === assignment.userId);
-          return { ...assignment, user: user! };
-        }));
-        message.success('Usuário atribuído com sucesso!');
-      } else {
-        message.error('Erro ao atribuir usuário');
-      }
-    } catch (error) {
-      console.error('Erro ao atribuir usuário:', error);
-      message.error('Erro ao atribuir usuário');
-    }
-  };
-
-  const handleRemoveAssignment = async (assignmentId: string) => {
-    try {
-      const res = await fetch(`/api/taskAssignments?id=${assignmentId}`, {
-        method: 'DELETE'
-      });
-      if (res.ok) {
-        const updatedRes = await fetch(`/api/taskAssignments?taskId=${task!.id}`);
-        const updatedAssignments = await updatedRes.json();
-        setAssignmentsWithUsers((updatedAssignments?.data || []).map((assignment: TaskAssignment) => {
-          const user = users.find((u: User) => u.id === assignment.userId);
-          return { ...assignment, user: user! };
-        }));
-        message.success('Atribuição removida com sucesso!');
-      } else {
-        message.error('Erro ao remover atribuição');
-      }
-    } catch (error) {
-      console.error('Erro ao remover atribuição:', error);
-      message.error('Erro ao remover atribuição');
-    }
-  };
 
   const handleRemoveDependency = async (dependencyId: string) => {
     try {
@@ -372,10 +334,6 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
       message.error('Erro ao remover dependência');
     }
   };
-
-  const availableUsers = users.filter(user =>
-    !assignmentsWithUsers.some(assignment => assignment.userId === user.id)
-  );
 
   return (
     <Modal

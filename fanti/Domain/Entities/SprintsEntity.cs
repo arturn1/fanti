@@ -2,10 +2,10 @@ using System;
 
 namespace Domain.Entities
 {
-    
-    public class SprintsEntity : BaseEntity 
+
+    public class SprintsEntity : BaseEntity
     {
-        public SprintsEntity() 
+        public SprintsEntity()
         {
         }
 
@@ -20,8 +20,9 @@ namespace Domain.Entities
             this.Status = Status;
 
         }
-        
+
         public Guid ProjectId { get; set; }
+        public virtual ProjectsEntity projectsEntity { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
         public DateTime StartDate { get; set; }

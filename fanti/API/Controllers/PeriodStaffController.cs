@@ -31,7 +31,25 @@ namespace API.Controllers
         public async Task<IActionResult> GetByIdAsync(Guid id)
         {
             var models = await _PeriodStaffRepository.GetByIdAsync(id);
-            if (models == null) return NotFound(_defaultDictionary.Response["NotFound"]); 
+            if (models == null) return NotFound(_defaultDictionary.Response["NotFound"]);
+
+            return Ok(new CommandResult(models, HttpStatusCode.OK));
+        }
+
+        [HttpGet("period/{id}")]
+        public async Task<IActionResult> GetByPeriodIdAsync(Guid id)
+        {
+            var models = await _PeriodStaffRepository.GetByParamsAsync(x => x.PeriodId == id);
+            if (models == null) return NotFound(_defaultDictionary.Response["NotFound"]);
+
+            return Ok(new CommandResult(models, HttpStatusCode.OK));
+        }
+
+        [HttpGet("staff/{id}")]
+        public async Task<IActionResult> GetByStaffIdAsync(Guid id)
+        {
+            var models = await _PeriodStaffRepository.GetByParamsAsync(x => x.StaffId == id);
+            if (models == null) return NotFound(_defaultDictionary.Response["NotFound"]);
 
             return Ok(new CommandResult(models, HttpStatusCode.OK));
         }
@@ -52,13 +70,13 @@ namespace API.Controllers
 
             return Ok(handle);
         }
-        
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteByIdAsync(Guid id)
         {
             var entity = await _PeriodStaffRepository.GetByIdAsync(id);
-            if (entity == null) return NotFound(_defaultDictionary.Response["NotFound"]); 
-                
+            if (entity == null) return NotFound(_defaultDictionary.Response["NotFound"]);
+
             _PeriodStaffRepository.DeleteObject(entity);
 
             var result = new { data = "Removed success!!!" };

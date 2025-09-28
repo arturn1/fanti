@@ -2,13 +2,13 @@ using System;
 
 namespace Domain.Entities
 {
-    
-    public class PeriodStaffEntity : BaseEntity 
+
+    public class PeriodStaffEntity : BaseEntity
     {
-        public PeriodStaffEntity() 
+        public PeriodStaffEntity()
         {
         }
-        
+
         public PeriodStaffEntity(StaffEntity Staff, Guid StaffId, Guid PeriodId, PeriodEntity Period, int TotalHours)
         {
             this.Staff = Staff;
@@ -18,11 +18,11 @@ namespace Domain.Entities
             this.TotalHours = TotalHours;
 
         }
-        
-        public StaffEntity Staff { get; set; }
+
+        public virtual StaffEntity Staff { get; set; }
         public Guid StaffId { get; set; }
         public Guid PeriodId { get; set; }
-        public PeriodEntity Period { get; set; }
+        public virtual PeriodEntity Period { get; set; }
         public int TotalHours { get; set; }
 
     }

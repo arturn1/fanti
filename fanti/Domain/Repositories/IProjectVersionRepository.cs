@@ -3,5 +3,5 @@ using Domain.Repositories.Contracts;
 
 namespace Domain.Repositories
 {
-    public interface ITaskAssignmentsRepository : IRepositoryBase<TaskAssignmentsEntity> { }
+    public interface IProjectVersionRepository : IRepositoryBase<ProjectVersionEntity> { }
 }

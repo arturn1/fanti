@@ -26,14 +26,9 @@ import {
 } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { CreateSubtaskModal } from '@/components/CreateSubtaskModal';
-import CreateTaskModal from '@/components/CreateTaskModal';
-import { UnifiedTaskModal } from '@/components/UnifiedTaskModal';
-// import { projectsService } from '@/services/projects';
-// import { sprintsService } from '@/services/sprints';
-// import { taskDependenciesService } from '@/services/taskDependencies';
-// import { tasksService } from '@/services/tasks';
-import { getTeams } from '@/services/teams';
+import { CreateSubtaskModal } from '@/app/tasks/components/CreateSubtaskModal';
+import CreateTaskModal from '@/app/tasks/components/CreateTaskModal';
+import { UnifiedTaskModal } from '@/app/tasks/components/UnifiedTaskModal';
 import { Project, Sprint, Task, TaskDependency, Team } from '@/types';
 import { getColorVariations, getTaskColorByStatus } from '@/utils/taskColors';
 import dayjs from 'dayjs';
@@ -108,7 +103,7 @@ function TasksPageContent() {
 
   useEffect(() => {
     loadData();
-    getTeams().then(setTeams).catch(() => setTeams([]));
+    fetch('/api/teams').then(res => res.json()).then(data => setTeams(data?.data || [])).catch(() => setTeams([]));
   }, []);
 
   // Resetar selectedSprint se estiver em uma milestone concluída
@@ -140,6 +135,7 @@ function TasksPageContent() {
   }, []);
 
   const loadData = async () => {
+    console.log('Loading data...');
     try {
       setLoading(true);
       const [tasksRes, projectsRes, sprintsRes, dependenciesRes] = await Promise.all([
@@ -281,7 +277,6 @@ function TasksPageContent() {
         id: task.id,
         type: taskType,
         progress: progress,
-        hideChildren: task.hideChildren || false,
         parent: task.parentTaskId || undefined,
         dependencies: taskDependencies,
         styles: {
@@ -474,9 +469,11 @@ function TasksPageContent() {
                 onMoveTaskAfter={ganttHandlers.handleMoveTaskAfter}
                 onMoveTaskBefore={ganttHandlers.handleMoveTaskBefore}
                 onArrowDoubleClick={ganttHandlers.handleArrowDoubleClick}
-
+                onEditTaskClick={ganttHandlers.handleEditTask}
                 // Botão de mais (criar subtarefa) - usando tipos corretos
                 onAddTaskClick={ganttHandlers.handleAddTask}
+              // onEditTask={ganttHandlers.onEditTask}
+              
               />
             </div>
           </>

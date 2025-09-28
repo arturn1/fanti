@@ -1,6 +1,6 @@
 
-import { NextRequest, NextResponse } from 'next/server';
 import api from '@/services/api';
+import { NextRequest, NextResponse } from 'next/server';
 
 // Buscar todas as dependências, por tarefa ou por ID
 export async function GET(req: NextRequest) {
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
             return NextResponse.json(response.data);
         }
         if (taskId) {
-            const response = await api.get(`/TaskDependencies/task/${taskId}`);
+            const response = await api.get(`/TaskDependencies/taskDependencies/${taskId}`);
             return NextResponse.json(response.data);
         }
         const response = await api.get('/TaskDependencies');
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const response = await api.post('/TaskDependencies/simple', body);
+        const response = await api.post('/TaskDependencies', body);
         return NextResponse.json(response.data);
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -51,7 +51,7 @@ export async function DELETE(req: NextRequest) {
         const { searchParams } = new URL(req.url);
         const id = searchParams.get('id');
         if (!id) {
-            await api.delete(`TaskDependencies/remove`, {
+            await api.delete(`TaskDependencies`, {
                 data: {
                     predecessorTaskId: searchParams.get('predecessorTaskId'),
                     successorTaskId: searchParams.get('successorTaskId')

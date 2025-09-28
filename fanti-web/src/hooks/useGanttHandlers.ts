@@ -4,7 +4,6 @@
  */
 import { Task, TaskDependency } from '@/types';
 import { message } from 'antd';
-import { id } from 'date-fns/locale';
 import dayjs from 'dayjs';
 
 /**
@@ -32,6 +31,16 @@ export class GanttHandlers {
 
   constructor(config: GanttHandlersConfig) {
     this.config = config;
+  }
+
+  /**
+   * Handler para editar tarefa: apenas recarrega os dados do Gantt
+   */
+  public onEditTask = async (task: any) => {
+    if (this.config.loadData) {
+      await this.config.loadData();
+    }
+    return task; // ou null, se preferir não alterar nada
   }
 
   /**
@@ -151,7 +160,7 @@ export class GanttHandlers {
 
         const estimatedHours = dayjs(newEndDate).diff(dayjs(newStartDate), 'hour');
 
-        await fetch(`/api/tasks?id=${parentTask?.id}`, {
+        await fetch(`/api/tasks/${parentTask?.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -161,7 +170,7 @@ export class GanttHandlers {
           })
         });
 
-        await fetch(`/api/tasks?id=${parentTask.id}`, {
+        await fetch(`/api/tasks/${parentTask.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -232,7 +241,7 @@ export class GanttHandlers {
         { startDate, endDate, estimatedHours, progress: task.progress || 0 },
         async () => {
 
-          await fetch(`/api/tasks?id=${task?.id}`, {
+          await fetch(`/api/tasks/${task?.id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -311,7 +320,7 @@ export class GanttHandlers {
         { progress: roundedProgress },
         async () => {
 
-          await fetch(`/api/tasks?id=${task?.id}`, {
+          await fetch(`/api/tasks/${task?.id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

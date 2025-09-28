@@ -1,18 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { 
-  Modal, 
-  Form, 
-  Input, 
-  Select, 
-  DatePicker, 
-  Button, 
-  message,
-  Typography 
-} from 'antd';
+import { CreateSprintCommand, CreateTaskDto, Project, Sprint } from '@/types';
 import { PlusOutlined } from '@ant-design/icons';
-import { Project, SprintStatus, CreateSprintCommand, CreateTaskDto, Sprint } from '@/types';
+import {
+  Button,
+  DatePicker,
+  Form,
+  Input,
+  message,
+  Modal,
+  Select,
+  Typography
+} from 'antd';
+import { useEffect, useState } from 'react';
 
 const { RangePicker } = DatePicker;
 const { TextArea } = Input;
@@ -48,7 +48,7 @@ export default function CreateSprintModal({ visible, onClose, onSuccess }: Creat
   const handleSubmit = async (values: any) => {
     try {
       setLoading(true);
-      
+
       const sprintData: CreateSprintCommand = {
         projectId: values.projectId || "00000000-0000-0000-0000-000000000000", // GUID vazio se não selecionado
         name: values.name,
@@ -69,13 +69,13 @@ export default function CreateSprintModal({ visible, onClose, onSuccess }: Creat
       if (!createdSprint) {
         throw new Error('Sprint não foi criado corretamente.');
       }
-      
+
       // Criar automaticamente uma task do tipo "project" com os dados do sprint
       const taskData: CreateTaskDto = {
         ProjectId: values.projectId || "00000000-0000-0000-0000-000000000000",
         SprintId: createdSprint.id, // Usar o ID do sprint criado
         Title: values.name, // Nome do sprint como título da task
-        Description: values.description ? 
+        Description: values.description ?
           `Sprint: ${values.name}\n\nObjetivo: ${values.goal}\n\nDescrição: ${values.description}` :
           `Sprint: ${values.name}\n\nObjetivo: ${values.goal}`,
         Priority: "2", // Prioridade média
@@ -84,9 +84,7 @@ export default function CreateSprintModal({ visible, onClose, onSuccess }: Creat
         StartDate: values.dateRange[0].format('YYYY-MM-DD'),
         EndDate: values.dateRange[1].format('YYYY-MM-DD'),
         Progress: 0,
-        Color: "#722ed1", // Cor roxa para sprints/milestones
         IsDisabled: false,
-        HideChildren: false
       };
 
       // Criar a task do tipo projeto
@@ -95,12 +93,12 @@ export default function CreateSprintModal({ visible, onClose, onSuccess }: Creat
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(taskData)
       });
-      
+
       message.success('Sprint e milestone criados com sucesso!');
       form.resetFields();
       onSuccess();
       onClose();
-      
+
     } catch (error) {
       console.error('Erro ao criar sprint:', error);
       message.error('Erro ao criar sprint. Tente novamente.');
@@ -127,7 +125,7 @@ export default function CreateSprintModal({ visible, onClose, onSuccess }: Creat
           💡 <strong>Dica:</strong> Ao criar um sprint, uma task do tipo "projeto" (milestone) será automaticamente criada no Gantt com as mesmas informações.
         </Text>
       </div>
-      
+
       <Form
         form={form}
         layout="vertical"
@@ -163,8 +161,8 @@ export default function CreateSprintModal({ visible, onClose, onSuccess }: Creat
           name="description"
           label="Descrição"
         >
-          <TextArea 
-            rows={3} 
+          <TextArea
+            rows={3}
             placeholder="Descrição da milestone (opcional)"
           />
         </Form.Item>
@@ -174,8 +172,8 @@ export default function CreateSprintModal({ visible, onClose, onSuccess }: Creat
           label="Objetivo"
           rules={[{ required: true, message: 'Digite o objetivo da milestone' }]}
         >
-          <TextArea 
-            rows={2} 
+          <TextArea
+            rows={2}
             placeholder="Qual é o objetivo desta milestone?"
           />
         </Form.Item>
@@ -185,7 +183,7 @@ export default function CreateSprintModal({ visible, onClose, onSuccess }: Creat
           label="Período da Milestone"
           rules={[{ required: true, message: 'Selecione o período da milestone' }]}
         >
-          <RangePicker 
+          <RangePicker
             style={{ width: '100%' }}
             format="DD/MM/YYYY"
             placeholder={['Data de início', 'Data de fim']}

@@ -1,52 +1,44 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { Project, Sprint, SprintStatus } from '@/types';
 import {
-  Card,
-  Button,
-  message,
-  Tag,
-  Typography,
-  Row,
-  Col,
-  Input,
-  Select,
-  Tooltip,
-  Progress,
-  Timeline,
-  Avatar,
-  Statistic,
-  Badge,
-  Empty,
-  Modal,
-  Table,
-  Space,
-  Popconfirm
-} from 'antd';
-import {
-  PlusOutlined,
-  CalendarOutlined,
-  ProjectOutlined,
-  SearchOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
-  PlayCircleOutlined,
-  PauseCircleOutlined,
-  TagsOutlined,
-  EyeOutlined,
+  DeleteOutlined,
   EditOutlined,
-  DeleteOutlined
+  PauseCircleOutlined,
+  PlayCircleOutlined,
+  PlusOutlined,
+  ProjectOutlined,
+  SearchOutlined
 } from '@ant-design/icons';
-import { Sprint, Project, SprintStatus, Task } from '@/types';
+import {
+  Button,
+  Card,
+  Col,
+  Empty,
+  Input,
+  message,
+  Modal,
+  Popconfirm,
+  Row,
+  Select,
+  Space,
+  Table,
+  Tag,
+  Tooltip,
+  Typography
+} from 'antd';
+import { useEffect, useState } from 'react';
 // import { sprintsService } from '@/services/sprints';
 // import { projectsService } from '@/services/projects';
 // import { tasksService } from '@/services/tasks';
-import CreateSprintModal from '@/components/CreateSprintModal';
+import CreateSprintModal from '@/app/sprints/components/CreateSprintModal';
+import EditSprintModal from '@/app/sprints/components/EditSprintModal';
+import ProductCard from '@/app/projects/components/ProductCard';
+import { calculateProductData, parseSprintStatus, ProductData as ProductDataType } from '@/utils/productCalculations';
 import dayjs from 'dayjs';
-import EditSprintModal from '@/components/EditSprintModal';
 import { useRouter } from 'next/navigation';
-import { calculateProductData, ProductData as ProductDataType, parseSprintStatus } from '@/utils/productCalculations';
-import ProductCard from '@/components/ProductCard';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -105,7 +97,6 @@ export default function SprintsPage() {
       );
       setProductsData(calculatedProductsData);
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
       message.error('Erro ao carregar dados');
     } finally {
       setLoading(false);
@@ -155,7 +146,6 @@ export default function SprintsPage() {
         message.error('Erro ao excluir milestone');
       }
     } catch (error) {
-      console.error('Erro ao excluir milestone:', error);
       message.error('Erro ao excluir milestone');
     }
   };

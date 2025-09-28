@@ -15,7 +15,9 @@ namespace Domain.Entities
 
 
         public Guid? ProjectId { get; set; }
+        public virtual ProjectsEntity? Project { get; set; }
         public Guid? SprintId { get; set; }
+        public virtual SprintsEntity? Sprint { get; set; }
         public Guid? ParentTaskId { get; set; }
         public Guid AssigneeId { get; set; }
         public string Title { get; set; }

@@ -1,12 +1,12 @@
 using Domain.Commands.Contracts;
 using Domain.Validation;
 
-namespace Domain.Commands 
+namespace Domain.Commands
 {
 
     public class UpdateProjectsCommand : ValidatableTypes, ICommand
     {
-        public UpdateProjectsCommand(Guid id, string Name, string Description, DateTime StartDate, DateTime EndDate, string Status, Guid OwnerId, string? url)
+        public UpdateProjectsCommand(Guid id, string Name, string Description, DateTime StartDate, DateTime EndDate, string Status, string? url)
         {
             this.Id = id;
             this.Name = Name;
@@ -14,7 +14,6 @@ namespace Domain.Commands
             this.StartDate = StartDate;
             this.EndDate = EndDate;
             this.Status = Status;
-            this.OwnerId = OwnerId;
             this.url = url;
 
         }
@@ -25,14 +24,13 @@ namespace Domain.Commands
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public string Status { get; set; }
-        public Guid OwnerId { get; set; }
         public string? url { get; set; }
 
 
         public bool IsCommandValid()
         {
             ValidateGuidNotEmpty(Id, "Id");
-            
+
             return this.isValid;
         }
     }

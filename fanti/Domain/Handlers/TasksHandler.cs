@@ -5,7 +5,6 @@ using Domain.Entities;
 using Domain.Handlers.Contracts;
 using Domain.Helpers;
 using Domain.Repositories;
-using Domain.Enum;
 using System.Net;
 
 namespace Domain.Handlers
@@ -13,7 +12,6 @@ namespace Domain.Handlers
     public class TasksHandler : IHandler<CreateTasksCommand>,
      IHandler<UpdateTasksCommand>,
       IHandler<UpdateTaskFieldsCommand>,
-       IHandler<EditTaskCommand>,
         IHandler<CreateSubtaskCommand>,
          IHandler<DeleteTaskCommand>
     {
@@ -30,6 +28,7 @@ namespace Domain.Handlers
 
         public async Task<ICommandResult> Handle(CreateTasksCommand command)
         {
+
             command.IsCommandValid();
             if (!command.isValid)
             {
@@ -39,6 +38,7 @@ namespace Domain.Handlers
             _mapper.Map(command, entity);
             await _TasksRepository.PostAsync(entity);
             return new CommandResult(entity, HttpStatusCode.Created);
+
         }
         public async Task<ICommandResult> Handle(UpdateTasksCommand command)
         {
@@ -59,7 +59,6 @@ namespace Domain.Handlers
 
             return new CommandResult(entity, HttpStatusCode.OK);
         }
-
         public async Task<ICommandResult> Handle(UpdateTaskFieldsCommand command)
         {
             command.IsCommandValid();
@@ -78,29 +77,6 @@ namespace Domain.Handlers
 
             return new CommandResult(entity, HttpStatusCode.OK);
         }
-
-        public async Task<ICommandResult> Handle(EditTaskCommand command)
-        {
-            command.IsCommandValid();
-            if (!command.isValid)
-            {
-                return new CommandResult(command.Errors, HttpStatusCode.BadRequest);
-            }
-
-            TasksEntity entity = await _TasksRepository.GetByIdAsync(command.Id);
-            if (entity == null)
-                return new CommandResult("Tarefa não encontrada", HttpStatusCode.NotFound);
-
-            _mapper.Map(command, entity);
-
-            await _TasksRepository.UpdateAsync(entity);
-
-            // Atualizar tarefa pai se existir
-            await UpdateParentTaskIfExists(entity);
-
-            return new CommandResult(entity, HttpStatusCode.OK);
-        }
-
         public async Task<ICommandResult> Handle(CreateSubtaskCommand command)
         {
             command.IsCommandValid();
@@ -144,75 +120,6 @@ namespace Domain.Handlers
 
             return new CommandResult(subtaskEntity, HttpStatusCode.Created);
         }
-
-        private async Task UpdateParentTaskIfExists(TasksEntity childTask)
-        {
-            // Verificar se a tarefa tem pai
-            if (childTask.ParentTaskId == null) return;
-
-            // Buscar tarefa pai
-            var parentTask = await _TasksRepository.GetByIdAsync(childTask.ParentTaskId.Value);
-            if (parentTask == null) return;
-
-            // Buscar todas as tarefas e filtrar os filhos do pai atual
-            var allTasks = await _TasksRepository.GetAllAsync();
-            var childTasks = allTasks.Where(t => t.ParentTaskId.HasValue &&
-                                                 t.ParentTaskId.Value == childTask.ParentTaskId.Value).ToList();
-
-            if (!childTasks.Any()) return;
-
-            // Calcular progresso médio dos filhos
-            var averageProgress = (int)childTasks.Average(t => (decimal)t.Progress);
-
-            // Determinar status baseado nos filhos
-            var newStatus = CalculateParentStatus(childTasks);
-
-            // Atualizar tarefa pai apenas se houve mudança
-            bool hasChanges = false;
-            if (parentTask.Progress != averageProgress)
-            {
-                parentTask.Progress = averageProgress;
-                hasChanges = true;
-            }
-
-            if (parentTask.Status != newStatus.ToString())
-            {
-                parentTask.Status = newStatus.ToString();
-                hasChanges = true;
-            }
-
-            if (hasChanges)
-            {
-                parentTask.setUpdate(DateTime.UtcNow);
-                await _TasksRepository.UpdateAsync(parentTask);
-
-                // Recursivamente atualizar avô se existir
-                await UpdateParentTaskIfExists(parentTask);
-            }
-        }
-
-        private static Domain.Enum.TaskStatus CalculateParentStatus(IEnumerable<TasksEntity> childTasks)
-        {
-            var children = childTasks.ToList();
-            if (!children.Any()) return Domain.Enum.TaskStatus.ToDo;
-
-            // Contar status dos filhos
-            var doneCount = children.Count(t => t.Status == Domain.Enum.TaskStatus.Done.ToString());
-            var inProgressCount = children.Count(t => t.Status == Domain.Enum.TaskStatus.InProgress.ToString());
-            var totalCount = children.Count;
-
-            // Se todos estão concluídos, pai fica concluído
-            if (doneCount == totalCount)
-                return Domain.Enum.TaskStatus.Done;
-
-            // Se pelo menos um está em progresso ou alguns estão concluídos, pai fica em progresso
-            if (inProgressCount > 0 || doneCount > 0)
-                return Domain.Enum.TaskStatus.InProgress;
-
-            // Caso contrário, pai fica como "A Fazer"
-            return Domain.Enum.TaskStatus.ToDo;
-        }
-
         public async Task<ICommandResult> Handle(DeleteTaskCommand command)
         {
             command.IsCommandValid();
@@ -247,7 +154,72 @@ namespace Domain.Handlers
 
             return new CommandResult("Tarefa deletada com sucesso", HttpStatusCode.OK);
         }
+        private async Task UpdateParentTaskIfExists(TasksEntity childTask)
+        {
+            // Verificar se a tarefa tem pai
+            if (childTask.ParentTaskId == null) return;
 
+            // Buscar tarefa pai
+            var parentTask = await _TasksRepository.GetByIdAsync(childTask.ParentTaskId.Value);
+            if (parentTask == null) return;
+
+            // Buscar todas as tarefas e filtrar os filhos do pai atual
+            var allTasks = await _TasksRepository.GetAllAsync();
+            var childTasks = allTasks.Where(t => t.ParentTaskId.HasValue &&
+                                                 t.ParentTaskId.Value == childTask.ParentTaskId.Value).ToList();
+
+            if (!childTasks.Any()) return;
+
+            // Calcular progresso médio dos filhos
+            var averageProgress = (int)childTasks.Average(t => (decimal)t.Progress);
+
+            // Determinar status baseado nos filhos
+            var newStatus = (int)CalculateParentStatus(childTasks);
+
+            // Atualizar tarefa pai apenas se houve mudança
+            bool hasChanges = false;
+            if (parentTask.Progress != averageProgress)
+            {
+                parentTask.Progress = averageProgress;
+                hasChanges = true;
+            }
+
+            if (parentTask.Status != newStatus.ToString())
+            {
+                parentTask.Status = newStatus.ToString();
+                hasChanges = true;
+            }
+
+            if (hasChanges)
+            {
+                parentTask.setUpdate(DateTime.UtcNow);
+                await _TasksRepository.UpdateAsync(parentTask);
+
+                // Recursivamente atualizar avô se existir
+                await UpdateParentTaskIfExists(parentTask);
+            }
+        }
+        private static Domain.Enum.TaskStatus CalculateParentStatus(IEnumerable<TasksEntity> childTasks)
+        {
+            var children = childTasks.ToList();
+            if (!children.Any()) return Domain.Enum.TaskStatus.ToDo;
+
+            // Contar status dos filhos
+            var doneCount = children.Count(t => t.Status == Domain.Enum.TaskStatus.Done.ToString());
+            var inProgressCount = children.Count(t => t.Status == Domain.Enum.TaskStatus.InProgress.ToString());
+            var totalCount = children.Count;
+
+            // Se todos estão concluídos, pai fica concluído
+            if (doneCount == totalCount)
+                return Domain.Enum.TaskStatus.Done;
+
+            // Se pelo menos um está em progresso ou alguns estão concluídos, pai fica em progresso
+            if (inProgressCount > 0 || doneCount > 0)
+                return Domain.Enum.TaskStatus.InProgress;
+
+            // Caso contrário, pai fica como "A Fazer"
+            return Domain.Enum.TaskStatus.ToDo;
+        }
         private async Task DeleteChildTasksRecursively(Guid parentTaskId)
         {
             // Buscar todas as tarefas filhas
@@ -272,7 +244,6 @@ namespace Domain.Handlers
                 _TasksRepository.SaveChanges();
             }
         }
-
         private async Task DeleteTaskDependencies(Guid taskId)
         {
             // Buscar todas as dependências onde a tarefa é predecessor ou sucessor

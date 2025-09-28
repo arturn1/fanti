@@ -5,8 +5,8 @@ import https from 'https';
 const isDev = process.env.NODE_ENV === 'development';
 
 const api = axios.create({
-  baseURL: 'http://fanti-api/api',
-  // baseURL: 'https://localhost:7213/api',
+  // baseURL: 'http://fanti-api/api',
+  baseURL: 'http://localhost:8081/api',
   headers: {
     'Content-Type': 'application/json',
   },

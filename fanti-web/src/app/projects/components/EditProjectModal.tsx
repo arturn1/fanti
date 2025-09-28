@@ -1,18 +1,19 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { Project, ProjectStatus, UpdateProjectCommand } from '@/types';
+import { EditOutlined } from '@ant-design/icons';
 import {
-  Modal,
+  Button,
+  DatePicker,
   Form,
   Input,
-  Select,
-  DatePicker,
-  Button,
-  message
+  message,
+  Modal,
+  Select
 } from 'antd';
-import { EditOutlined } from '@ant-design/icons';
-import { Project, ProjectStatus, UpdateProjectCommand } from '@/types';
 import dayjs from 'dayjs';
+import { useEffect, useState } from 'react';
+import api from '@/services/api';
 
 const { RangePicker } = DatePicker;
 const { TextArea } = Input;
@@ -69,21 +70,15 @@ export default function EditProjectModal({ visible, project, onClose, onSuccess 
         startDate: values.dateRange ? values.dateRange[0].toISOString() : "",
         endDate: values.dateRange ? values.dateRange[1].toISOString() : "",
         status: values.status.toString(),
-        ownerId: project.ownerId || "00000000-0000-0000-0000-000000000000"
       };
 
-      await fetch(`/api/projects`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updateData)
-      });
+      await api.put(`/projects`, JSON.stringify(updateData));
 
       message.success('Produto atualizado com sucesso!');
       form.resetFields();
       onSuccess();
 
     } catch (error) {
-      console.error('Erro ao atualizar produto:', error);
       message.error('Erro ao atualizar produto. Tente novamente.');
     } finally {
       setLoading(false);

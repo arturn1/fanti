@@ -1,5 +1,7 @@
 using Application.Dictionary;
+using Domain.Commands;
 using Domain.Handlers;
+using Domain.Handlers.Contracts;
 using Domain.Helpers;
 using Domain.Repositories;
 using Infrastructure.Repositories;
@@ -13,25 +15,27 @@ namespace IoC
         {
 
             #region Repositories
+            services.AddScoped<IProjectVersionRepository, ProjectVersionRepository>();
             services.AddScoped<ITasksPeriodRepository, TasksPeriodRepository>();
             services.AddScoped<IPeriodStaffRepository, PeriodStaffRepository>();
             services.AddScoped<IPeriodRepository, PeriodRepository>();
             services.AddScoped<IStaffRepository, StaffRepository>();
             services.AddScoped<ITeamRepository, TeamRepository>();
-            services.AddScoped<ITaskAssignmentsRepository, TaskAssignmentsRepository>();
-            services.AddScoped<ITaskDependenciesRepository, TaskDependenciesRepository>();            services.AddScoped<ITasksRepository, TasksRepository>();
-            services.AddScoped<ISprintsRepository, SprintsRepository>();            services.AddScoped<IProjectsRepository, ProjectsRepository>();
+            services.AddScoped<ITaskDependenciesRepository, TaskDependenciesRepository>();
+            services.AddScoped<ITasksRepository, TasksRepository>();
+            services.AddScoped<ISprintsRepository, SprintsRepository>();
+            services.AddScoped<IProjectsRepository, ProjectsRepository>();
             services.AddScoped<IUsersRepository, UsersRepository>();
             services.AddScoped<ITasksPeriodRepository, TasksPeriodRepository>();
             #endregion
 
             #region Handlers
+            services.AddTransient<ProjectVersionHandler>();
             services.AddTransient<TasksPeriodHandler>();
             services.AddTransient<PeriodStaffHandler>();
             services.AddTransient<PeriodHandler>();
             services.AddTransient<StaffHandler>();
             services.AddTransient<TeamHandler>();
-            services.AddTransient<TaskAssignmentsHandler>();
             services.AddTransient<TaskDependenciesHandler>();
             services.AddTransient<TasksHandler>();
             services.AddTransient<SprintsHandler>();
@@ -40,6 +44,7 @@ namespace IoC
             #endregion
 
             #region Services
+            services.AddTransient<IHandler<CreatePeriodStaffCommand>, PeriodStaffHandler>();
             #endregion
 
             #region Dictionary

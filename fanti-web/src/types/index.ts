@@ -12,35 +12,6 @@ export enum TaskCategory {
   Hotfix = 'Hotfix'
 }
 
-export const getTaskCategoryDisplayName = (category: TaskCategory | string): string => {
-  switch (category) {
-    case TaskCategory.Melhoria:
-      return 'Melhoria';
-    case TaskCategory.Desenvolvimento:
-      return 'Desenvolvimento';
-    case TaskCategory.Correcao:
-      return 'Correção';
-    case TaskCategory.Hotfix:
-      return 'Hotfix';
-    default:
-      return String(category);
-  }
-};
-
-export const getTaskCategoryByDisplayName = (displayName: string): TaskCategory => {
-  switch (displayName) {
-    case 'Melhoria':
-      return TaskCategory.Melhoria;
-    case 'Desenvolvimento':
-      return TaskCategory.Desenvolvimento;
-    case 'Correção':
-      return TaskCategory.Correcao;
-    case 'Hotfix':
-      return TaskCategory.Hotfix;
-    default:
-      return TaskCategory.Desenvolvimento;
-  }
-};
 // Enums
 export enum UserRole {
   Admin = 1,
@@ -98,19 +69,6 @@ export const getTaskStatusName = (status: TaskStatus): string => {
   }
 };
 
-export const getTaskStatusByName = (name: string): TaskStatus => {
-  switch (name) {
-    case 'ToDo':
-      return TaskStatus.ToDo;
-    case 'InProgress':
-      return TaskStatus.InProgress;
-    case 'Done':
-      return TaskStatus.Done;
-    default:
-      return TaskStatus.ToDo;
-  }
-};
-
 // Função para converter status do backend (string) para exibição em português
 export const getTaskStatusDisplayName = (status: string | TaskStatus): string => {
   // Se já é um enum, converter para string primeiro
@@ -159,21 +117,6 @@ export const getTaskPriorityName = (priority: TaskPriority): string => {
   }
 };
 
-export const getTaskPriorityByName = (name: string): TaskPriority => {
-  switch (name) {
-    case 'Low':
-      return TaskPriority.Low;
-    case 'Medium':
-      return TaskPriority.Medium;
-    case 'High':
-      return TaskPriority.High;
-    case 'Critical':
-      return TaskPriority.Critical;
-    default:
-      return TaskPriority.Medium;
-  }
-};
-
 export type TaskType = "task" | "milestone" | "project";
 
 export enum DependencyType {
@@ -217,16 +160,6 @@ export interface Project {
   updated?: string;
 }
 
-export interface ProjectUser {
-  id: string;
-  projectId: string;
-  userId: string;
-  role: ProjectRole;
-  joinedAt: string;
-  created: string;
-  updated?: string;
-}
-
 export interface Sprint {
   id: string;
   projectId: string;
@@ -245,7 +178,6 @@ export interface Task {
   projectId: string;
   sprintId?: string;
   parentTaskId?: string;
-  assigneeId?: string;
   title: string;
   description?: string;
   storyPoints?: number;
@@ -258,12 +190,7 @@ export interface Task {
   startDate?: string;
   endDate?: string;
   dueDate?: string;
-  completedAt?: string;
   progress?: number; // 0-100
-  color?: string; // Hex color
-  isDisabled?: boolean;
-  hideChildren?: boolean;
-  tags?: string;
   teamId?: string; // Equipe
   created: string;
   updated?: string;
@@ -279,56 +206,6 @@ export interface TaskDependency {
   updated?: string;
 }
 
-export interface TaskAssignment {
-  id: string;
-  taskId: string;
-  userId: string;
-  role: AssignmentRole;
-  created: string;
-  updated?: string;
-}
-
-export interface TaskComment {
-  id: string;
-  taskId: string;
-  userId: string;
-  comment: string;
-  created: string;
-  updated?: string;
-}
-
-export interface TaskAttachment {
-  id: string;
-  taskId: string;
-  fileName: string;
-  filePath: string;
-  fileSize: number;
-  contentType: string;
-  uploadedById: string;
-  created: string;
-  updated?: string;
-}
-
-export interface TaskHistory {
-  id: string;
-  taskId: string;
-  userId: string;
-  action: string;
-  oldValue?: string;
-  newValue?: string;
-  fieldChanged?: string;
-  created: string;
-}
-
-// DTOs para APIs
-export interface CreateProjectDto {
-  name: string;
-  description?: string;
-  startDate?: string;
-  endDate?: string;
-  status: ProjectStatus;
-  ownerId?: string;
-}
 
 // Comando específico para o backend
 export interface CreateProjectCommand {
@@ -338,17 +215,6 @@ export interface CreateProjectCommand {
   startDate: string;
   endDate: string;
   status: string;
-  ownerId: string;
-}
-
-export interface CreateSprintDto {
-  projectId?: string;
-  name: string;
-  description?: string;
-  goal?: string;
-  startDate: string;
-  endDate: string;
-  status: SprintStatus;
 }
 
 // Comando específico para o backend
@@ -383,14 +249,6 @@ export interface CreateTaskDto {
   TeamId?: string;      // Equipe
 }
 
-export interface CreateUserDto {
-  email: string;
-  name: string;
-  avatar?: string;
-  role: UserRole;
-  isActive?: boolean;
-}
-
 // Response API
 export interface ApiResponse<T> {
   data: T;
@@ -404,38 +262,6 @@ export interface ApiError {
   errors?: string[];
 }
 
-// Kanban Board
-export interface KanbanColumn {
-  id: string;
-  title: string;
-  status: TaskStatus;
-  tasks: Task[];
-  color: string;
-}
-
-export interface DragResult {
-  draggableId: string;
-  type: string;
-  source: {
-    droppableId: string;
-    index: number;
-  };
-  destination?: {
-    droppableId: string;
-    index: number;
-  };
-}
-
-// Comandos específicos para o backend
-export interface CreateProjectCommand {
-  name: string;
-  description: string;
-  startDate: string;
-  endDate: string;
-  status: string;
-  ownerId: string;
-}
-
 export interface UpdateProjectCommand {
   id: string;
   name: string;
@@ -444,35 +270,6 @@ export interface UpdateProjectCommand {
   startDate: string;
   endDate: string;
   status: string;
-  ownerId: string;
-}
-
-export interface UpdateSprintCommand {
-  id: string;
-  projectId: string | null;
-  name: string | null;
-  description: string | null;
-  startDate: string | null;
-  endDate: string | null;
-  goal: string | null;
-  status: string;
-}
-
-// Filtros e buscas
-export interface TaskFilters {
-  projectId?: string;
-  sprintId?: string;
-  assigneeId?: string;
-  status?: TaskStatus[];
-  priority?: TaskPriority[];
-  type?: TaskType[];
-  search?: string;
-}
-
-export interface ProjectFilters {
-  status?: ProjectStatus[];
-  ownerId?: string;
-  search?: string;
 }
 
 // Period Management Types

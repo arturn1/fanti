@@ -7,17 +7,15 @@ namespace Domain.Commands
 
     public class CreateStaffCommand : ValidatableTypes, ICommand
     {
-        public CreateStaffCommand(string Name, Guid TeamId, int AvailableHours)
+        public CreateStaffCommand(string Name, Guid TeamId)
         {
 
             this.Name = Name;
             this.TeamId = TeamId;
-            this.AvailableHours = AvailableHours;
 
         }
         public string Name { get; set; }
         public Guid TeamId { get; set; }
-        public int AvailableHours { get; set; }
 
 
         public bool IsCommandValid()

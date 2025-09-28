@@ -53,22 +53,14 @@ namespace API.Controllers
             return Ok(handle);
         }
 
-        [HttpPatch("{id}")]
-        public async Task<IActionResult> UpdateTaskFieldsAsync(Guid id, [FromBody] UpdateTaskFieldsCommand command, [FromServices] TasksHandler handler)
-        {
-            command.Id = id; // Garantir que o ID está correto
-            var handle = await handler.Handle(command);
-
-            return Ok(handle);
-        }
-
-        [HttpPut("edit")]
-        public async Task<IActionResult> EditTaskAsync([FromBody] UpdateTasksCommand command, [FromServices] TasksHandler handler)
+        [HttpPatch]
+        public async Task<IActionResult> UpdateTaskFieldsAsync([FromBody] UpdateTaskFieldsCommand command, [FromServices] TasksHandler handler)
         {
             var handle = await handler.Handle(command);
 
             return Ok(handle);
         }
+
 
         [HttpPost("subtask")]
         public async Task<IActionResult> CreateSubtaskAsync([FromBody] CreateSubtaskCommand command, [FromServices] TasksHandler handler)

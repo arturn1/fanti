@@ -8,7 +8,7 @@ using System.Net;
 
 namespace Domain.Handlers
 {
-    public class PeriodStaffHandler: IHandler<CreatePeriodStaffCommand>, IHandler<UpdatePeriodStaffCommand>
+    public class PeriodStaffHandler : IHandler<CreatePeriodStaffCommand>, IHandler<UpdatePeriodStaffCommand>
     {
         private readonly IPeriodStaffRepository _PeriodStaffRepository;
         private readonly IMapper _mapper;
@@ -17,7 +17,7 @@ namespace Domain.Handlers
             _PeriodStaffRepository = PeriodStaffRepository;
             _mapper = mapper;
         }
-        
+
 
         public async Task<ICommandResult> Handle(CreatePeriodStaffCommand command)
         {
@@ -29,7 +29,7 @@ namespace Domain.Handlers
             }
 
 
-            PeriodStaffEntity entity = new ();
+            PeriodStaffEntity entity = new();
             _mapper.Map(command, entity);
 
             await _PeriodStaffRepository.PostAsync(entity);
@@ -56,7 +56,7 @@ namespace Domain.Handlers
             await _PeriodStaffRepository.UpdateAsync(entity);
 
             return new CommandResult(entity, HttpStatusCode.Created);
-            
+
         }
 
     }

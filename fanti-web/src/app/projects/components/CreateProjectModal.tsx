@@ -1,18 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
-import { 
-  Modal, 
-  Form, 
-  Input, 
-  Select, 
-  DatePicker, 
-  Button, 
-  message 
-} from 'antd';
+import { CreateProjectCommand } from '@/types';
 import { PlusOutlined } from '@ant-design/icons';
-import { ProjectStatus, CreateProjectCommand } from '@/types';
+import {
+  Button,
+  DatePicker,
+  Form,
+  Input,
+  message,
+  Modal
+} from 'antd';
 import dayjs from 'dayjs';
+import { useState } from 'react';
+import api from '@/services/api';
 
 const { RangePicker } = DatePicker;
 const { TextArea } = Input;
@@ -30,7 +30,7 @@ export default function CreateProjectModal({ visible, onClose, onSuccess }: Crea
   const handleSubmit = async (values: any) => {
     try {
       setLoading(true);
-      
+
       // Formato esperado pelo backend CreateProjectsCommand
       const projectData: CreateProjectCommand = {
         name: values.name,
@@ -39,20 +39,15 @@ export default function CreateProjectModal({ visible, onClose, onSuccess }: Crea
         startDate: values.dateRange ? values.dateRange[0].toISOString() : new Date().toISOString(),
         endDate: values.dateRange ? values.dateRange[1].toISOString() : "",
         status: "1", // String conforme esperado pelo comando
-        ownerId: "00000000-0000-0000-0000-000000000000" // GUID vazio como padrão
       };
 
-      await fetch(`/api/projects`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(projectData)
-      });
-      
+      await api.post(`/projects`, JSON.stringify(projectData));
+
       message.success('Produto criado com sucesso!');
       form.resetFields();
       onSuccess();
       onClose();
-      
+
     } catch (error) {
       console.error('Erro ao criar produto:', error);
       message.error('Erro ao criar produto. Tente novamente.');
@@ -98,7 +93,7 @@ export default function CreateProjectModal({ visible, onClose, onSuccess }: Crea
             { required: true, message: 'Digite a descrição do produto' }
           ]}
         >
-          <TextArea 
+          <TextArea
             rows={3}
             placeholder="Descreva os objetivos e escopo do produto..."
           />
@@ -108,7 +103,7 @@ export default function CreateProjectModal({ visible, onClose, onSuccess }: Crea
           name="url"
           label="URL do Produto (Opcional)"
         >
-          <Input 
+          <Input
             placeholder="https://exemplo.com"
             type="url"
           />
@@ -130,9 +125,9 @@ export default function CreateProjectModal({ visible, onClose, onSuccess }: Crea
           <Button onClick={handleCancel} style={{ marginRight: 8 }}>
             Cancelar
           </Button>
-          <Button 
-            type="primary" 
-            htmlType="submit" 
+          <Button
+            type="primary"
+            htmlType="submit"
             loading={loading}
             icon={<PlusOutlined />}
           >

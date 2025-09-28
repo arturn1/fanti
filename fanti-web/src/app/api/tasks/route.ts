@@ -56,42 +56,7 @@ export async function POST(req: NextRequest) {
     }
 }
 
-// PATCH: Atualizar campos específicos da tarefa
-export async function PATCH(req: NextRequest) {
-    try {
-        const { searchParams } = new URL(req.url);
-        const id = searchParams.get('id');
-        if (!id) {
-            return NextResponse.json({ error: 'Missing id' }, { status: 400 });
-        }
-        const body = await req.json();
-        const response = await api.patch(`/Tasks/${id}`, body);
-        return NextResponse.json(response.data);
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-}
 
-// PUT: Atualizar tarefa ou editar completa
-export async function PUT(req: NextRequest) {
-    try {
-        const body = await req.json();
-        // Se vier edit, usar endpoint de edição completa
-        if (body.edit === true && body.id && body.task && body.editData) {
-            const response = await api.put('/Tasks/edit', {
-                id: body.id,
-                ...body.task,
-                ...body.editData
-            });
-            return NextResponse.json(response.data);
-        }
-        // Atualização padrão
-        const response = await api.put('/Tasks', body);
-        return NextResponse.json(response.data);
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-}
 
 // DELETE: Deletar tarefa
 export async function DELETE(req: NextRequest) {

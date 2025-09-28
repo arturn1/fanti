@@ -112,7 +112,7 @@ export default function EditSprintModal({
         startDate: values.startDate?.format('YYYY-MM-DD'),
         endDate: values.endDate?.format('YYYY-MM-DD')
       };
-      const res = await fetch(`/api/tasks?id=${task?.id}`, {
+      const res = await fetch(`/api/tasks/${task?.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updateData)

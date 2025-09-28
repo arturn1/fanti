@@ -2,7 +2,7 @@ using Domain.Commands.Contracts;
 using Domain.Validation;
 using System.Text.Json.Serialization;
 
-namespace Domain.Commands 
+namespace Domain.Commands
 {
     public class CreateTaskDependencyByTasksCommand : ValidatableTypes, ICommand
     {
@@ -13,16 +13,16 @@ namespace Domain.Commands
             this.Type = 1; // FinishToStart por padrão
             this.Lag = 0;
         }
-        
+
         [JsonPropertyName("predecessorTaskId")]
         public Guid PredecessorTaskId { get; set; }
-        
+
         [JsonPropertyName("successorTaskId")]
         public Guid SuccessorTaskId { get; set; }
-        
+
         [JsonPropertyName("type")]
         public int Type { get; set; }
-        
+
         [JsonPropertyName("lag")]
         public int Lag { get; set; }
 
