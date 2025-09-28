@@ -93,13 +93,34 @@ export default function PeriodsPage() {
         // Percentual de utilização
         const utilizationPercentage = totalPeriodHours > 0 ? (assignedHours / totalPeriodHours) * 100 : 0;
 
+        // Horas totais por projeto (apenas projetos com horas > 0)
+        const projectHoursMap: Record<string, number> = {};
+        tasksPeriod
+            .filter(tp => {
+                const relatedPeriodStaff = periodStaffs.find(ps => ps.id === tp.periodStaffId);
+                return relatedPeriodStaff?.periodId === periodId && tp.projectId !== undefined && tp.projectId !== null;
+            })
+            .forEach(tp => {
+                const projectId = String(tp.projectId);
+                if (!projectHoursMap[projectId]) projectHoursMap[projectId] = 0;
+                projectHoursMap[projectId] += tp.taskHours;
+            });
+        // Array de projetos com horas > 0
+        const projectHours = Object.entries(projectHoursMap)
+            .filter(([_, hours]) => typeof hours === 'number' && hours > 0)
+            .map(([projectId, hours]) => {
+                const project = projects.find(p => String(p.id) === projectId);
+                return { projectId, projectName: project?.name || 'Projeto não encontrado', hours };
+            });
+
         return {
             totalPeriodHours,
             assignedHours,
             remainingHours,
-            utilizationPercentage
+            utilizationPercentage,
+            projectHours
         };
-    }, [modalsHook.modalData.viewingPeriod, periodStaffs, tasksPeriod]);
+    }, [modalsHook.modalData.viewingPeriod, periodStaffs, tasksPeriod, projects]);
 
     // Fetch functions
     const fetchStaffs = useCallback(async () => {
@@ -464,24 +485,38 @@ export default function PeriodsPage() {
                         </Descriptions>
 
                         {periodMetrics && (
-                            <Descriptions title="Métricas de Horas" bordered column={2} style={{ marginTop: 24 }}>
-                                <Descriptions.Item label="Horas Totais no Período">
-                                    <Text strong style={{ fontSize: '16px' }}>{periodMetrics.totalPeriodHours}h</Text>
-                                </Descriptions.Item>
-                                <Descriptions.Item label="Horas Atribuídas">
-                                    <Text strong style={{ fontSize: '16px', color: '#1890ff' }}>{periodMetrics.assignedHours}h</Text>
-                                </Descriptions.Item>
-                                <Descriptions.Item label="Horas Restantes">
-                                    <Text strong style={{ fontSize: '16px', color: periodMetrics.remainingHours >= 0 ? '#52c41a' : '#ff4d4f' }}>
-                                        {periodMetrics.remainingHours}h
-                                    </Text>
-                                </Descriptions.Item>
-                                <Descriptions.Item label="Taxa de Utilização">
-                                    <Text strong style={{ fontSize: '16px', color: periodMetrics.utilizationPercentage > 100 ? '#ff4d4f' : periodMetrics.utilizationPercentage > 80 ? '#faad14' : '#52c41a' }}>
-                                        {periodMetrics.utilizationPercentage.toFixed(1)}%
-                                    </Text>
-                                </Descriptions.Item>
-                            </Descriptions>
+                            <>
+                                <Descriptions title="Métricas de Horas" bordered column={2} style={{ marginTop: 24 }}>
+                                    <Descriptions.Item label="Horas Totais no Período">
+                                        <Text strong style={{ fontSize: '16px' }}>{periodMetrics.totalPeriodHours}h</Text>
+                                    </Descriptions.Item>
+                                    <Descriptions.Item label="Horas Atribuídas">
+                                        <Text strong style={{ fontSize: '16px', color: '#1890ff' }}>{periodMetrics.assignedHours}h</Text>
+                                    </Descriptions.Item>
+                                    <Descriptions.Item label="Horas Restantes">
+                                        <Text strong style={{ fontSize: '16px', color: periodMetrics.remainingHours >= 0 ? '#52c41a' : '#ff4d4f' }}>
+                                            {periodMetrics.remainingHours}h
+                                        </Text>
+                                    </Descriptions.Item>
+                                    <Descriptions.Item label="Taxa de Utilização">
+                                        <Text strong style={{ fontSize: '16px', color: periodMetrics.utilizationPercentage > 100 ? '#ff4d4f' : periodMetrics.utilizationPercentage > 80 ? '#faad14' : '#52c41a' }}>
+                                            {periodMetrics.utilizationPercentage.toFixed(1)}%
+                                        </Text>
+                                    </Descriptions.Item>
+                                </Descriptions>
+                                {/* Novo campo: Horas totais por Projeto */}
+                                <Descriptions title="Horas por Projeto" bordered column={1} style={{ marginTop: 24 }}>
+                                    {periodMetrics.projectHours.length > 0 ? (
+                                        periodMetrics.projectHours.map(ph => (
+                                            <Descriptions.Item key={ph.projectId} label={ph.projectName}>
+                                                <Text strong style={{ fontSize: '15px' }}>{Number(ph.hours)}h</Text>
+                                            </Descriptions.Item>
+                                        ))
+                                    ) : (
+                                        <Descriptions.Item label="Nenhum projeto com horas">-</Descriptions.Item>
+                                    )}
+                                </Descriptions>
+                            </>
                         )}
                     </div>
                 )}

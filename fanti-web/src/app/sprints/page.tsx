@@ -8,7 +8,6 @@ import {
     EditOutlined,
     PauseCircleOutlined,
     PlayCircleOutlined,
-    PlusOutlined,
     ProjectOutlined,
     SearchOutlined
 } from '@ant-design/icons';
@@ -30,9 +29,6 @@ import {
     Typography
 } from 'antd';
 import { useEffect, useState } from 'react';
-// import { sprintsService } from '@/services/sprints';
-// import { projectsService } from '@/services/projects';
-// import { tasksService } from '@/services/tasks';
 import CreateSprintModal from '@/app/sprints/components/CreateSprintModal';
 import EditSprintModal from '@/app/sprints/components/EditSprintModal';
 import ProductCard from '@/app/projects/components/ProductCard';
@@ -182,7 +178,10 @@ export default function SprintsPage() {
                     productData={productData}
                     showActions={true}
                     onViewDetails={handleCardClick}
-                    onAddMilestone={() => setCreateModalVisible(true)}
+                    onAddMilestone={() => {
+                        setSelectedProduct(productData);
+                        setCreateModalVisible(true);
+                    }}
                     milestoneFilter="active"
                 />
             </Col>
@@ -265,6 +264,7 @@ export default function SprintsPage() {
                     setCreateModalVisible(false);
                     message.success('Milestone criado com sucesso!');
                 }}
+                project={selectedProduct ? selectedProduct.project : projects[0]}
             />
 
             <EditSprintModal

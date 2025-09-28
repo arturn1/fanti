@@ -38,7 +38,7 @@ app.UseCors(builder =>
            .AllowAnyHeader());
 
 app.UseMiddleware<ErrorHandlingMiddleware>();
-app.UseMiddleware<ResponseCleaningMiddleware>();
+// app.UseMiddleware<ResponseCleaningMiddleware>();
 
 app.UseHttpsRedirection();
 

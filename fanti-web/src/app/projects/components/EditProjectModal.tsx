@@ -130,6 +130,9 @@ export default function EditProjectModal({ visible, project, onClose, onSuccess 
                 <Form.Item
                     name="description"
                     label="Descrição"
+                    rules={[
+                        { required: true, message: 'Digite a descrição do produto' }
+                    ]}
                 >
                     <TextArea
                         rows={3}
@@ -164,6 +167,7 @@ export default function EditProjectModal({ visible, project, onClose, onSuccess 
                 <Form.Item
                     name="dateRange"
                     label="Período do Produto"
+                    rules={[{ required: true, message: 'Selecione o período do produto' }]}
                 >
                     <RangePicker
                         style={{ width: '100%' }}

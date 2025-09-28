@@ -1,6 +1,6 @@
 'use client';
 
-import {  CreateTaskCommand, Task, TaskCategory, Team } from '@/types';
+import { CreateTaskCommand, Task, TaskCategory, TaskType, Team } from '@/types';
 import { getAllStatusColors } from '@/utils/taskColors';
 import {
   App,
@@ -12,6 +12,7 @@ import {
   Select,
   Space,
 } from 'antd';
+import { ca } from 'date-fns/locale';
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
 const { RangePicker } = DatePicker;
@@ -52,23 +53,23 @@ export const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
     if (visible) {
       form.setFieldsValue({
         status: 0,
-        type: "task",
+        type: 0,
+        category: 0,
       });
     }
   }, [visible, form]);
 
   const handleSubmit = async (values: any) => {
     if (!parentTask) return;
-
     try {
       setLoading(true);
       const taskData: CreateTaskCommand = {
-        ProjectId: parentTask.projectId,
-        SprintId: parentTask.sprintId,
         ParentTaskId: parentTask.id,
         Title: values.title,
         Description: values.description || '',
         Status: values.status,
+        ProjectId: parentTask.projectId,
+        SprintId: parentTask.sprintId,
         Type: values.type,
         Category: values.category,
         StartDate: values.dateRange ? values.dateRange[0].toISOString() : new Date().toISOString(),
@@ -175,9 +176,8 @@ export const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
             rules={[{ required: true, message: 'Por favor, selecione o tipo' }]}
           >
             <Select placeholder="Selecione o tipo">
-              <Option value="task">Tarefa</Option>
-              <Option value="milestone">Marco</Option>
-              <Option value="project">Projeto</Option>
+              <Option value={TaskType.Task}>Tarefa</Option>
+              <Option value={TaskType.Milestone}>Marco</Option>
             </Select>
           </Form.Item>
           <Form.Item
@@ -210,8 +210,9 @@ export const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
         <Space.Compact style={{ display: 'flex', marginBottom: 16 }}>
           <Form.Item
             name="dateRange"
-            label="Período do Produto (Opcional)"
+            label="Período do Produto"
             style={{ flex: 1, marginRight: 8 }}
+            rules={[{ required: true, message: 'Por favor, selecione o período' }]}
           >
             <RangePicker
               style={{ width: '100%', flex: 1 }}

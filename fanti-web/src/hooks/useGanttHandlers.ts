@@ -2,7 +2,7 @@
  * Handlers dos eventos da biblioteca Gantt
  * Funções para lidar com movimentação, dependências e outros eventos do Gantt
  */
-import { Task, TaskDependency } from '@/types';
+import { Task, TaskDependency, TaskType } from '@/types';
 import { message } from 'antd';
 import dayjs from 'dayjs';
 
@@ -47,7 +47,7 @@ export class GanttHandlers {
    * Sincroniza as datas da sprint com as datas do projeto
    */
   private syncSprintDates = async (task: Task, startDate: string, endDate: string) => {
-    if (task.type === 'project' && task.sprintId) {
+    if (task.type === TaskType.Project && task.sprintId) {
       try {
         await fetch(`/api/sprints`, {
           method: 'PUT',
@@ -73,7 +73,7 @@ export class GanttHandlers {
    * Exclui a sprint associada ao projeto
    */
   private deleteAssociatedSprint = async (task: Task) => {
-    if (task.type === 'project' && task.sprintId) {
+    if (task.type === TaskType.Project && task.sprintId) {
       try {
         await fetch(`/api/sprints/${task.sprintId}`, {
           method: 'DELETE'
@@ -208,7 +208,7 @@ export class GanttHandlers {
       const endDate = dayjs(task.end).format('YYYY-MM-DD');
 
       // Verificar se é um projeto e sincronizar datas da sprint
-      if (realTask?.type === 'project' && realTask?.sprintId &&
+      if (realTask?.type === TaskType.Project && realTask?.sprintId &&
         (realTask.startDate !== startDate || realTask.endDate !== endDate)) {
         await this.syncSprintDates(realTask, startDate, endDate);
       }
@@ -314,13 +314,17 @@ export class GanttHandlers {
         { progress: roundedProgress },
         async () => {
 
-          await fetch(`/api/tasks/${task?.id}`, {
+          const res = await fetch(`/api/tasks/${task?.id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               Progress: roundedProgress,
             })
           });
+
+          if (res.ok) {
+            this.config.loadData();
+          }
         }
       );
 
@@ -332,6 +336,7 @@ export class GanttHandlers {
         });
         await Promise.all(childUpdates);
       }
+
 
     } catch (error) {
       message.error('Erro ao atualizar progresso');
@@ -541,7 +546,7 @@ export class GanttHandlers {
             for (const task of tasksToDelete) {
               // Verificar se é um projeto e excluir sprint antes de excluir a tarefa
               const realTask = this.config.tasks.find(t => t.id === task.id);
-              if (realTask?.type === 'project' && realTask?.sprintId) {
+              if (realTask?.type === TaskType.Project && realTask?.sprintId) {
                 await this.deleteAssociatedSprint(realTask);
               }
               await fetch(`/api/tasks?id=${task.id}`, {

@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
         // Se vier parentTaskId, criar subtarefa
-        if (body.parentTaskId) {
+        if (body.ParentTaskId) {
             const response = await api.post('/Tasks/subtask', body);
             return NextResponse.json(response.data);
         }

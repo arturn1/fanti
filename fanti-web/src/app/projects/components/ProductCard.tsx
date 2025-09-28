@@ -1,4 +1,4 @@
-import { ProjectStatus, SprintStatus } from '@/types';
+import { ProjectStatus, SprintStatus, TaskType } from '@/types';
 import { ProductData, parseSprintStatus } from '@/utils/productCalculations';
 import {
   CalendarOutlined,
@@ -118,7 +118,10 @@ export default function ProductCard({
 
   const tasksDisplay = milestoneFilter === 'active'
     ? `${productData.completedTasks}/${productData.totalTasks}`
-    : productData.tasks.filter(t => t.type !== 'project').length;
+    : productData.tasks.filter(t => t.type != 'project').length;
+
+    console.log('Tasks:', productData.tasks);
+    console.log('tasksDisplay:', tasksDisplay);
 
   return (
     <Card
@@ -235,11 +238,11 @@ export default function ProductCard({
 
                     // Calcular progresso do milestone baseado na tarefa 'project' do sprint
                     const sprintTasks = productData.tasks.filter(t => t.sprintId === sprint.id);
-                    const projectTask = sprintTasks.find(t => t.type === 'project');
+                    const projectTask = sprintTasks.find(t => t.type == 'project');
                     const sprintProgress = projectTask ? projectTask.progress || 0 : 0;
 
                     // Contar apenas tarefas que NÃO são do tipo 'project'
-                    const nonProjectTasks = sprintTasks.filter(t => t.type !== 'project');
+                    const nonProjectTasks = sprintTasks.filter(t => t.type == 'project');
 
                     return (
                       <Timeline.Item

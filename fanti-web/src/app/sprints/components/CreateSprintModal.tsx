@@ -22,35 +22,19 @@ interface CreateSprintModalProps {
   visible: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  project: Project;
 }
 
-export default function CreateSprintModal({ visible, onClose, onSuccess }: CreateSprintModalProps) {
+export default function CreateSprintModal({ visible, onClose, onSuccess, project }: CreateSprintModalProps) {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [projects, setProjects] = useState<Project[]>([]);
-
-  // Carregar projetos disponíveis
-  useEffect(() => {
-    const loadProjects = async () => {
-      try {
-        const projectsData = await fetch(`/api/projects`).then(res => res.json()).then(data => data?.data as Project[]);
-        setProjects(projectsData);
-      } catch (error) {
-        console.error('Erro ao carregar projetos:', error);
-      }
-    };
-
-    if (visible) {
-      loadProjects();
-    }
-  }, [visible]);
 
   const handleSubmit = async (values: any) => {
     try {
       setLoading(true);
 
       const sprintData: CreateSprintCommand = {
-        projectId: values.projectId || "00000000-0000-0000-0000-000000000000", // GUID vazio se não selecionado
+        projectId: project.id,
         name: values.name,
         description: values.description || "",
         goal: values.goal,
@@ -72,7 +56,7 @@ export default function CreateSprintModal({ visible, onClose, onSuccess }: Creat
 
       // Criar automaticamente uma task do tipo "project" com os dados do sprint
       const taskData: CreateTaskCommand = {
-        ProjectId: values.projectId || "00000000-0000-0000-0000-000000000000",
+        ProjectId: project.id,
         SprintId: createdSprint.id, // Usar o ID do sprint criado
         Title: values.name, // Nome do sprint como título da task
         Description: values.description ?
@@ -96,7 +80,6 @@ export default function CreateSprintModal({ visible, onClose, onSuccess }: Creat
       onClose();
 
     } catch (error) {
-      console.error('Erro ao criar sprint:', error);
       message.error('Erro ao criar sprint. Tente novamente.');
     } finally {
       setLoading(false);
@@ -128,21 +111,8 @@ export default function CreateSprintModal({ visible, onClose, onSuccess }: Creat
         onFinish={handleSubmit}
         autoComplete="off"
       >
-        <Form.Item
-          name="projectId"
-          label="Projeto (Opcional)"
-        >
-          <Select
-            placeholder="Selecione o projeto (opcional)"
-            loading={projects.length === 0}
-            allowClear
-          >
-            {projects.map((project) => (
-              <Select.Option key={project.id} value={project.id}>
-                {project.name}
-              </Select.Option>
-            ))}
-          </Select>
+        <Form.Item label="Projeto">
+          <Input value={project ? project.name : ''} disabled />
         </Form.Item>
 
         <Form.Item

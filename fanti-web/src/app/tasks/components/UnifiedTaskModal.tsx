@@ -1,6 +1,6 @@
 'use client';
 
-import { Period, PeriodStaff, Staff, Task, TaskCategory, TaskDependency, TasksPeriod, TaskStatus, Team, User } from '@/types';
+import { getTaskCategoryLabel, getTaskStatusLabel, getTaskTypeLabel, getTaskTypeLabelFromTaskType, Period, PeriodStaff, Staff, Task, TaskCategory, TaskDependency, TasksPeriod, TaskStatus, TaskType, Team, User } from '@/types';
 import { isRangeOverlap } from '@/utils/dateRange';
 import { getAllStatusColors } from '@/utils/taskColors';
 import {
@@ -187,21 +187,9 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
     return Math.round(totalProgress / childTasks.length);
   };
 
-  const calculateProjectStatus = (childTasks: Task[]): TaskStatus => {
-    if (!childTasks || childTasks.length === 0) return TaskStatus.ToDo;
-
-    const allDone = childTasks.every(child => child.status === TaskStatus.Done);
-    const anyInProgress = childTasks.some(child => child.status === TaskStatus.InProgress);
-
-    if (allDone) return TaskStatus.Done;
-    if (anyInProgress) return TaskStatus.InProgress;
-    return TaskStatus.ToDo;
-  };
-
-  const isProjectType = task?.type === 'project';
+  const isProjectType = task?.type.toString() == 'project';
   const childTasks = tasks.filter(t => t.parentTaskId === task?.id);
   const calculatedProgress = isProjectType ? calculateProjectProgress(childTasks) : (task?.progress || 0);
-  const calculatedStatus = isProjectType ? calculateProjectStatus(childTasks) : task?.status;
 
   const loadData = async () => {
     try {
@@ -220,14 +208,14 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
       form.setFieldsValue({
         name: task.title,
         description: task.description,
-        status: task.status,
+        status: getTaskStatusLabel(task.status),
         progress: calculatedProgress,
         projectId: task.projectId,
         sprintId: task.sprintId,
         startDate: task.startDate ? dayjs(task.startDate) : null,
         endDate: task.endDate ? dayjs(task.endDate) : null,
-        type: task.type,
-        category: task.category || TaskCategory.Development,
+        type: getTaskTypeLabelFromTaskType(task.type.toString()),
+        category: getTaskCategoryLabel(task.category),
         teamId: task.teamId || undefined
       });
       // Carregar atribuições e dependências via API interna
@@ -251,7 +239,7 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
         return { ...dependency, successorTask: successorTask! };
       }));
     } catch (error) {
-      console.error('Erro ao carregar dados da tarefa:', error);
+      message.error('Erro ao carregar dados da tarefa:');
     }
   };
 
@@ -260,19 +248,18 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
     try {
       setLoading(true);
       const values = await form.validateFields();
-      const backendStatus = values.status;
       const updateData = {
         id: task.id,
         title: values.name,
         description: values.description,
-        status: backendStatus,
+        status: typeof values.status === 'string' ? getTaskStatusLabel(values.status) : values.status,
         progress: values.progress,
         projectId: values.projectId,
         sprintId: values.sprintId,
-        startDate: values.startDate?.format('YYYY-MM-DD'),
-        endDate: values.endDate?.format('YYYY-MM-DD'),
-        type: values.type,
-        category: values.category,
+        startDate: values.startDate?.toISOString(),
+        endDate: values.endDate?.toISOString(),
+        type: typeof values.type === 'string' ? getTaskTypeLabel(values.type) : values.type,
+        category: typeof values.category === 'string' ? getTaskCategoryLabel(values.category) : values.category,
         teamId: values.teamId
       };
       const res = await fetch(`/api/tasks/${task.id}`, {
@@ -289,13 +276,11 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
         message.error(err?.message || 'Erro ao atualizar tarefa');
       }
     } catch (error) {
-      console.error('Erro ao atualizar tarefa:', error);
       message.error('Erro ao atualizar tarefa');
     } finally {
       setLoading(false);
     }
   };
-
 
   const handleRemoveDependency = async (dependencyId: string) => {
     try {
@@ -391,9 +376,8 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
                   rules={[{ required: true, message: 'Por favor, selecione o tipo' }]}
                 >
                   <Select placeholder="Selecione o tipo">
-                    <Option value="task">Tarefa</Option>
-                    <Option value="milestone">Marco</Option>
-                    <Option value="project">Projeto</Option>
+                    <Option value={TaskType.Task}>Tarefa</Option>
+                    <Option value={TaskType.Milestone}>Marco</Option>
                   </Select>
                 </Form.Item>
               </Col>

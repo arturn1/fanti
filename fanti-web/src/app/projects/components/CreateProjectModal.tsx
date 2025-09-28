@@ -10,9 +10,9 @@ import {
     message,
     Modal
 } from 'antd';
+import { tr } from 'date-fns/locale';
 import dayjs from 'dayjs';
 import { useState } from 'react';
-import api from '@/services/api';
 
 const { RangePicker } = DatePicker;
 const { TextArea } = Input;
@@ -117,6 +117,7 @@ export default function CreateProjectModal({ visible, onClose, onSuccess }: Crea
                 <Form.Item
                     name="dateRange"
                     label="Período do Produto (Opcional)"
+                    rules={[{ required: true, message: 'Selecione o período do produto' }]}
                 >
                     <RangePicker
                         style={{ width: '100%' }}

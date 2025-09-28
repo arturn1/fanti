@@ -8,23 +8,23 @@ namespace Domain.Commands
 
     public class UpdateTasksCommand : ValidatableTypes, ICommand
     {
-        public UpdateTasksCommand(Guid id, Guid? ProjectId, Guid? SprintId, Guid? ParentTaskId, string Title,
-        string Description, Enum.TaskStatus Status, DateTime? StartDate, DateTime? EndDate,
-         decimal Progress, TaskType? Type, TaskCategory? Category, Guid? TeamId)
+        public UpdateTasksCommand(Guid id, Guid? projectId, Guid? sprintId, Guid? parentTaskId, string title,
+        string description, Enum.TaskStatus status, DateTime? startDate, DateTime? endDate,
+        decimal progress, TaskType? type, TaskCategory? category, Guid? teamId)
         {
             this.Id = id;
-            this.ProjectId = ProjectId;
-            this.SprintId = SprintId;
-            this.ParentTaskId = ParentTaskId;
-            this.Title = Title;
-            this.Description = Description;
-            this.Status = Status;
-            this.StartDate = StartDate;
-            this.EndDate = EndDate;
-            this.Progress = Progress;
-            this.Type = Type;
-            this.Category = Category;
-            this.TeamId = TeamId;
+            this.ProjectId = projectId;
+            this.SprintId = sprintId;
+            this.ParentTaskId = parentTaskId;
+            this.Title = title;
+            this.Description = description;
+            this.Status = status;
+            this.StartDate = startDate;
+            this.EndDate = endDate;
+            this.Progress = progress;
+            this.Type = type;
+            this.Category = category;
+            this.TeamId = teamId;
         }
 
         public Guid Id { get; set; }
@@ -33,7 +33,7 @@ namespace Domain.Commands
         public Guid? ParentTaskId { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
-        public Enum.TaskStatus? Status { get; set; }
+        public Enum.TaskStatus Status { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public decimal Progress { get; set; }

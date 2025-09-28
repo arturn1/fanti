@@ -28,7 +28,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { CreateSubtaskModal } from '@/app/tasks/components/CreateSubtaskModal';
 import { UnifiedTaskModal } from '@/app/tasks/components/UnifiedTaskModal';
-import { Project, Sprint, Task, TaskDependency, TaskStatus, Team } from '@/types';
+import { Project, Sprint, Task, TaskDependency, TaskStatus, Team, toGanttTaskType } from '@/types';
 import { getColorVariations, getTaskColorByStatus } from '@/utils/taskColors';
 import dayjs from 'dayjs';
 
@@ -56,7 +56,6 @@ function TasksPageContent() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<string>('all');
   const [loading, setLoading] = useState(true);
-  const [createModalVisible, setCreateModalVisible] = useState(false);
 
   const [selectedTaskForUnified, setSelectedTaskForUnified] = useState<Task | null>(null);
   const [showUnifiedModal, setShowUnifiedModal] = useState(false);
@@ -152,6 +151,7 @@ function TasksPageContent() {
       ]);
 
       setTasks(tasksData?.data || []);
+      console.log('Tasks:', tasksData);
       setProjects(projectsData?.data || []);
       setSprints(sprintsData?.data || []);
       setDependencies(dependenciesData?.data || []);
@@ -252,14 +252,14 @@ function TasksPageContent() {
       const hasChildren = orderedTasks.some(t => t.parentTaskId === task.id);
 
       // Determinar o tipo: usar o tipo da tarefa do backend ou inferir pela hierarquia
-      let taskType: GanttTaskType = task.type || "task";
+      let taskType: GanttTaskType = toGanttTaskType(task.type);
 
       // Se não tem tipo definido, inferir pela hierarquia
       if (!task.type) {
         if (hasChildren && !task.parentTaskId) {
-          taskType = "project"; // Tarefa pai será mostrada como projeto
+          taskType = 'project'; // Tarefa pai será mostrada como projeto
         } else {
-          taskType = "task"; // Padrão para tarefas normais
+          taskType = 'task'; // Padrão para tarefas normais
         }
       }
 
@@ -462,10 +462,8 @@ function TasksPageContent() {
                 onMoveTaskBefore={ganttHandlers.handleMoveTaskBefore}
                 onArrowDoubleClick={ganttHandlers.handleArrowDoubleClick}
                 onEditTaskClick={ganttHandlers.handleEditTask}
-                // Botão de mais (criar subtarefa) - usando tipos corretos
                 onAddTaskClick={ganttHandlers.handleAddTask}
-              // onEditTask={ganttHandlers.onEditTask}
-              
+
               />
             </div>
           </>

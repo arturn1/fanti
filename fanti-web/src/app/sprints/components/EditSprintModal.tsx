@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Form, Input, Select, DatePicker, message } from 'antd';
-import { Sprint, Project, SprintStatus, Task } from '@/types';
+import { Sprint, Project, SprintStatus, Task, TaskType } from '@/types';
 import dayjs from 'dayjs';
 import { start } from 'repl';
 
@@ -97,7 +97,7 @@ export default function EditSprintModal({
                 .then(data => data.data as Task[]);
 
             const task: Task | undefined = allTasks.find(task => task.sprintId === sprint.id &&
-                task.type === 'project'
+                task.type === TaskType.Project
             );
 
             const updateData = {

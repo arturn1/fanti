@@ -1,4 +1,4 @@
-import { Period, PeriodStaff, SprintStatus, Staff, Task, TasksPeriod } from '@/types';
+import { Period, PeriodStaff, SprintStatus, Staff, Task, TasksPeriod, TaskType } from '@/types';
 import { isRangeOverlap } from '@/utils/dateRange';
 import { calculateProductData, parseSprintStatus, ProductData } from '@/utils/productCalculations';
 import { Card, Carousel, Col, Divider, Empty, Progress, Row, Select, Spin, Statistic, Tag, Tooltip, Typography } from 'antd';
@@ -65,13 +65,17 @@ export default function MilestonesDashboard() {
     fetchData();
   }, []);
 
-  // Filtro de milestones por status
+  // Filtro de milestones por status e produtos com sprints
   const filteredProducts = useMemo(() => {
-    if (statusFilter === 'all') return productsData;
-    return productsData.map(product => ({
-      ...product,
-      sprints: product.sprints.filter(s => parseSprintStatus(s.status) === statusFilter)
-    }));
+    let filtered = productsData;
+    if (statusFilter !== 'all') {
+      filtered = productsData.map(product => ({
+        ...product,
+        sprints: product.sprints.filter(s => parseSprintStatus(s.status) === statusFilter)
+      }));
+    }
+    // Exibir apenas produtos que tenham pelo menos uma sprint relacionada
+    return filtered.filter(product => product.sprints && product.sprints.length > 0);
   }, [productsData, statusFilter]);
 
   return (
@@ -147,7 +151,7 @@ export default function MilestonesDashboard() {
                           const status = parseSprintStatus(sprint.status);
                           const atrasada = status !== SprintStatus.Completed && sprint.endDate && dayjs().isAfter(dayjs(sprint.endDate), 'day');
                           // Calcular progresso da milestone (sprint) pelas tasks do tipo 'project' associadas
-                          const sprintTasks = tasks.filter(t => t.sprintId === sprint.id && t.type === 'project');
+                          const sprintTasks = tasks.filter(t => t.sprintId === sprint.id && t.type === TaskType.Project);
                           let sprintProgress = 0;
                           if (sprintTasks.length > 0) {
                             sprintProgress = Math.round(

@@ -131,9 +131,9 @@ export default function PeriodsBySprintDashboard() {
       {loading ? <Spin /> : (
         <Row gutter={[24, 24]} justify="center" align="top">
           <Col xs={24} md={8}>
-            <Card title="Métricas de Horas do Período" 
-            size="small" 
-            bodyStyle={{ padding: 16, minHeight: 180 }}
+            <Card title="Métricas de Horas do Período"
+              size="small"
+              style={{ padding: 16, minHeight: 400 }}
             >
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div>
@@ -151,40 +151,56 @@ export default function PeriodsBySprintDashboard() {
               </div>
             </Card>
           </Col>
-          <Col xs={24} md={8}>
-            <Card title="Horas Totais x Atribuídas" size="small" bodyStyle={{ padding: 16, minHeight: 180, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Col xs={24} md={6}>
+            <Card title="Horas Totais x Atribuídas" size="small" style={{
+              padding: 16, minHeight: 400, maxWidth: 380,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
+            }}>
               <Doughnut
                 data={{
-                  labels: ['Total', 'Atribuídas'],
+                  labels: ['Horas Atribuídas', 'Horas Restantes'],
                   datasets: [{
-                    data: [totalPeriodHours, assignedPeriodHours],
-                    backgroundColor: ['#1677ff', '#52c41a'],
+                    data: [assignedPeriodHours, remainingPeriodHours],
+                    backgroundColor: ['#888', '#e0e7ef'], // 'Atribuídas' cinza sólido
+                    borderColor: ['#7d8a97ff', '#d1d9e0ff'],
+                    borderWidth: 2,
                   }],
                 }}
                 options={doughnutOptions}
               />
+              {/* Labels customizados na parte de baixo */}
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 32, marginTop: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ width: 16, height: 16, background: '#e0e7ef', display: 'inline-block', borderRadius: 4, border: '1px solid #b3c2d1' }} />
+                  <span style={{ color: '#3a4a5a', fontWeight: 500 }}>Restantes</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ width: 16, height: 16, background: '#888', display: 'inline-block', borderRadius: 4, border: '1px solid #e0e7ef' }} />
+                  <span style={{ color: '#444', fontWeight: 500 }}>Atribuídas</span>
+                </div>
+              </div>
             </Card>
           </Col>
-          <Col xs={24} md={8}>
-            <Card title="Horas por Staff" size="small" bodyStyle={{ padding: 16, minHeight: 180 }}>
+          <Col xs={24} md={10}>
+            <Card title="Horas por Staff" size="small" style={{ padding: 16, minHeight: 400 }}>
               <Bar
                 data={{
                   labels: staffLabels,
                   datasets: [
                     {
-                      label: 'Total',
-                      data: staffTotalHours,
-                      backgroundColor: 'rgba(22,119,255,0.3)',
-                      borderColor: '#1677ff',
+                      label: 'Atribuídas',
+                      data: staffAssignedHours,
+                      backgroundColor: '#888',
+                      borderColor: '#888',
                       borderWidth: 2,
                       barPercentage: 0.7,
                       categoryPercentage: 0.7,
                     },
                     {
-                      label: 'Atribuídas',
-                      data: staffAssignedHours,
-                      backgroundColor: '#52c41a',
-                      borderColor: '#389e0d',
+                      label: 'Total',
+                      data: staffTotalHours,
+                      backgroundColor: '#e0e7ef',
+                      borderColor: '#b3c2d1',
                       borderWidth: 2,
                       barPercentage: 0.7,
                       categoryPercentage: 0.7,

@@ -1,4 +1,4 @@
-import { Project, Sprint, SprintStatus, Task, TaskStatus } from '@/types';
+import { Project, Sprint, SprintStatus, Task, TaskStatus, TaskType } from '@/types';
 
 export interface ProductData {
   project: Project;
@@ -70,7 +70,7 @@ export const calculateProductData = (
     // 2. TAREFAS: Contar APENAS tarefas que compõem as sprints ativas (não concluídas) e que NÃO são do tipo 'project'
     const sprintIds = activeSprints.map(sprint => sprint.id);
     const sprintTasks = productData.tasks.filter(task =>
-      task.sprintId && sprintIds.includes(task.sprintId) && task.type !== 'project'
+      task.sprintId && sprintIds.includes(task.sprintId) && task.type != 'project'
     );
 
     productData.totalTasks = sprintTasks.length;
@@ -79,7 +79,7 @@ export const calculateProductData = (
 
     // 3. PROGRESSO GERAL: Baseado APENAS nas tarefas do tipo 'project' dos sprints ativos, excluindo as completas
     const projectTasks = productData.tasks.filter(task =>
-      task.type == 'project' &&
+      task.type === 'project' &&
       task.sprintId && sprintIds.includes(task.sprintId) && // APENAS sprints ativos
       task.status !== TaskStatus.Done &&
       task.progress !== 100
@@ -97,7 +97,7 @@ export const calculateProductData = (
     } else {
       // Se todas as tasks do tipo 'project' estão completas, progresso = 100%
       const allProjectTasksInActiveSprints = productData.tasks.filter(task =>
-        task.type === 'project' &&
+        task.type == 'project' &&
         task.sprintId && sprintIds.includes(task.sprintId)
       );
       if (allProjectTasksInActiveSprints.length > 0) {
@@ -137,7 +137,7 @@ export const calculateSimpleProductStats = (
   return fullCalculation.map(productData => ({
     project: productData.project,
     sprints: productData.sprints, // Todos os sprints para exibição na home
-    tasks: productData.tasks.filter(t => t.type !== 'project'), // Apenas tarefas não-projeto para exibição
+    tasks: productData.tasks.filter(t => t.type !== TaskType.Project), // Apenas tarefas não-projeto para exibição
     progress: productData.progress, // MESMO cálculo da função principal
     totalTasks: productData.totalTasks,
     completedTasks: productData.completedTasks

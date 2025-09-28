@@ -43,7 +43,7 @@ namespace Domain.Handlers
             }
             catch (System.Exception e)
             {
-                
+
                 throw e;
             }
 
@@ -58,7 +58,8 @@ namespace Domain.Handlers
             TasksEntity entity = await _TasksRepository.GetByIdAsync(command.Id);
             if (entity == null) return new CommandResult("Entity not found", HttpStatusCode.NotFound);
 
-            // Atualizar apenas campos não-nulos
+            entity.Type = command.Type.GetDisplayName();
+            command.Type = null; // Limpar para evitar sobrescrever com nulo
             _mapper.Map(command, entity);
             await _TasksRepository.UpdateAsync(entity);
 
@@ -112,7 +113,7 @@ namespace Domain.Handlers
                 Progress = command.Progress,
                 Category = command.Category,
                 TeamId = command.TeamId,
-                Type = command.Type.GetDisplayName(), // Herda tipo da tarefa pai
+                Type = command.Type.GetDisplayName(),
             };
 
             await _TasksRepository.PostAsync(subtaskEntity);

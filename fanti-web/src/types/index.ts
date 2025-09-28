@@ -1,3 +1,28 @@
+// Conversão de TaskType para GanttTaskType
+import { TaskType as GanttTaskType } from '@wamra/gantt-task-react';
+
+/**
+ * Converte um TaskType (enum ou string) para GanttTaskType ('task' | 'milestone' | 'project')
+ */
+export function toGanttTaskType(type: TaskType | string | undefined): GanttTaskType {
+    if (typeof type === 'string') {
+        const lower = type.toLowerCase();
+        if (lower === 'milestone') return 'milestone';
+        if (lower === 'project') return 'project';
+        return 'task';
+    }
+    if (typeof type === 'number') {
+        switch (type) {
+            case TaskType.Milestone:
+                return 'milestone';
+            case TaskType.Project:
+                return 'project';
+            default:
+                return 'task';
+        }
+    }
+    return 'task';
+}
 // Team type based on API response
 export interface Team {
     id: string;
@@ -12,6 +37,29 @@ export enum TaskCategory {
     Hotfix = 3
 }
 
+// Labels em pt-br para TaskCategory
+export function getTaskCategoryLabel(category: TaskCategory | string | undefined): string | number {
+    if (typeof category === 'string') {
+        switch (category.toLowerCase()) {
+            case 'melhoria': return 0;
+            case 'desenvolvimento': return 1;
+            case 'correção': return 2;
+            case 'hotfix': return 3;
+        }
+        // Tenta converter string numérica
+        const num = Number(category);
+        if (!isNaN(num)) category = num as TaskCategory;
+        else return category;
+    }
+    switch (category) {
+        case TaskCategory.Improvement: return 'Melhoria';
+        case TaskCategory.Development: return 'Desenvolvimento';
+        case TaskCategory.BugFix: return 'Correção';
+        case TaskCategory.Hotfix: return 'Hotfix';
+        default: return '';
+    }
+}
+
 // Enums
 export enum UserRole {
     Admin = 1,
@@ -21,6 +69,29 @@ export enum UserRole {
     Stakeholder = 5
 }
 
+export function getUserRoleLabel(role: UserRole | string | undefined): string {
+    if (typeof role === 'string') {
+        switch (role.toLowerCase()) {
+            case 'admin': return 'Administrador';
+            case 'productowner': return 'Product Owner';
+            case 'scrummaster': return 'Scrum Master';
+            case 'developer': return 'Desenvolvedor';
+            case 'stakeholder': return 'Stakeholder';
+        }
+        const num = Number(role);
+        if (!isNaN(num)) role = num as UserRole;
+        else return role;
+    }
+    switch (role) {
+        case UserRole.Admin: return 'Administrador';
+        case UserRole.ProductOwner: return 'Product Owner';
+        case UserRole.ScrumMaster: return 'Scrum Master';
+        case UserRole.Developer: return 'Desenvolvedor';
+        case UserRole.Stakeholder: return 'Stakeholder';
+        default: return '';
+    }
+}
+
 export enum ProjectStatus {
     Active = 0,
     Completed = 1,
@@ -28,21 +99,114 @@ export enum ProjectStatus {
     Cancelled = 3
 }
 
+export function getProjectStatusLabel(status: ProjectStatus | string | undefined): string {
+    if (typeof status === 'string') {
+        switch (status.toLowerCase()) {
+            case 'Ativo': return 'Ativo';
+            case 'completed': return 'Concluído';
+            case 'onhold': return 'Em Espera';
+            case 'cancelled': return 'Cancelado';
+        }
+        const num = Number(status);
+        if (!isNaN(num)) status = num as ProjectStatus;
+        else return status;
+    }
+    switch (status) {
+        case ProjectStatus.Active: return 'Ativo';
+        case ProjectStatus.Completed: return 'Concluído';
+        case ProjectStatus.OnHold: return 'Em Espera';
+        case ProjectStatus.Cancelled: return 'Cancelado';
+        default: return '';
+    }
+}
+
 
 export enum SprintStatus {
-    Planning = 1,
-    Active = 2,
-    Testing = 3,
-    Completed = 4
+    Planning = 0,
+    Active = 1,
+    Testing = 2,
+    Completed = 3
+}
+
+export function getSprintStatusLabel(status: SprintStatus | string | undefined): string {
+    if (typeof status === 'string') {
+        switch (status.toLowerCase()) {
+            case 'planning': return 'Planejamento';
+            case 'active': return 'Ativo';
+            case 'testing': return 'Testando';
+            case 'completed': return 'Concluído';
+        }
+        const num = Number(status);
+        if (!isNaN(num)) status = num as SprintStatus;
+        else return status;
+    }
+    switch (status) {
+        case SprintStatus.Planning: return 'Planejamento';
+        case SprintStatus.Active: return 'Ativo';
+        case SprintStatus.Testing: return 'Testando';
+        case SprintStatus.Completed: return 'Concluído';
+        default: return '';
+    }
 }
 
 export enum TaskStatus {
-    ToDo = 1,        // A Fazer
-    InProgress = 2,  // Em Progresso
-    Done = 3         // Concluído
+    ToDo = 0,        // A Fazer
+    InProgress = 1,  // Em Progresso
+    Done = 2         // Concluído
 }
 
-export type TaskType = "task" | "milestone" | "project";
+export function getTaskStatusLabel(status: TaskStatus | string | undefined): string | number {
+    if (typeof status === 'string') {
+        switch (status.toLowerCase()) {
+            case 'a fazer': return 0;
+            case 'em progresso': return 1;
+            case 'concluído': return 2;
+        }
+        const num = Number(status);
+        if (!isNaN(num)) status = num as TaskStatus;
+        else return status;
+    }
+    switch (status) {
+        case TaskStatus.ToDo: return 'A Fazer';
+        case TaskStatus.InProgress: return 'Em Progresso';
+        case TaskStatus.Done: return 'Concluído';
+        default: return '';
+    }
+}
+
+export enum TaskType {
+    Task = 0,
+    Milestone = 1,
+    Project = 2
+}
+
+export function getTaskTypeLabel(type: TaskType | string | undefined): string | number {
+    if (typeof type === 'string') {
+        switch (type.toLowerCase()) {
+            case 'tarefa': return 0;
+            case 'marco': return 1;
+            case 'projeto': return 2;
+        }
+        const num = Number(type);
+        if (!isNaN(num)) type = num as TaskType;
+        else return type;
+    }
+    switch (type) {
+        case TaskType.Task: return 'Tarefa';
+        case TaskType.Milestone: return 'Marco';
+        case TaskType.Project: return 'Projeto';
+        default: return '';
+    }
+}
+
+export function getTaskTypeLabelFromTaskType(type: string): string {
+    switch (type.toLowerCase()) {
+        case 'task': return 'Tarefa';
+        case 'milestone': return 'Marco';
+        case 'project': return 'Projeto';
+    }
+    return 'Não Definido';
+}
 
 // Interfaces principais
 export interface User {
@@ -93,7 +257,7 @@ export interface Task {
     description?: string;
     storyPoints?: number;
     status: TaskStatus; // Aceita tanto enum quanto string do backend
-    type: TaskType;
+    type: TaskType | string; // Aceita tanto enum quanto string do backend
     category?: TaskCategory | string;
     actualHours?: number;
     startDate?: string;
@@ -143,8 +307,8 @@ export interface CreateTaskCommand {
     Title: string;
     Description?: string;
     Status?: TaskStatus;      // String, não enum
-    Type?: string;        // String, não enum
-    Category?: string;    // String, não enum
+    Type?: TaskType;        // String, não enum
+    Category?: TaskCategory;    // String, não enum
     StartDate?: string;
     EndDate?: string;
     Progress?: number;    // 0-100
