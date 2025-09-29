@@ -47,7 +47,7 @@ export class GanttHandlers {
    * Sincroniza as datas da sprint com as datas do projeto
    */
   private syncSprintDates = async (task: Task, startDate: string, endDate: string) => {
-    if (task.type === TaskType.Project && task.sprintId) {
+    if (task.type == 'project' && task.sprintId) {
       try {
         await fetch(`/api/sprints`, {
           method: 'PUT',
@@ -56,7 +56,7 @@ export class GanttHandlers {
             id: task.sprintId,
             startDate,
             endDate,
-            status: task.status?.toString() || '1'
+            status: task.status?.toString() || 1
           })
         });
 
@@ -73,9 +73,9 @@ export class GanttHandlers {
    * Exclui a sprint associada ao projeto
    */
   private deleteAssociatedSprint = async (task: Task) => {
-    if (task.type === TaskType.Project && task.sprintId) {
+    if (task.type == 'project' && task.sprintId) {
       try {
-        await fetch(`/api/sprints/${task.sprintId}`, {
+        await fetch(`api/sprints?id=${task.sprintId}`, {
           method: 'DELETE'
         });
         message.success(`Sprint associada ao projeto "${task.title}" foi excluída.`);
@@ -208,7 +208,7 @@ export class GanttHandlers {
       const endDate = dayjs(task.end).format('YYYY-MM-DD');
 
       // Verificar se é um projeto e sincronizar datas da sprint
-      if (realTask?.type === TaskType.Project && realTask?.sprintId &&
+      if (realTask?.type == 'project' && realTask?.sprintId &&
         (realTask.startDate !== startDate || realTask.endDate !== endDate)) {
         await this.syncSprintDates(realTask, startDate, endDate);
       }
@@ -544,16 +544,15 @@ export class GanttHandlers {
         onOk: async () => {
           try {
             for (const task of tasksToDelete) {
-              // Verificar se é um projeto e excluir sprint antes de excluir a tarefa
+              // Se for Project, deleta a sprint associada antes
               const realTask = this.config.tasks.find(t => t.id === task.id);
-              if (realTask?.type === TaskType.Project && realTask?.sprintId) {
+              if (realTask?.type == 'project' && realTask?.sprintId) {
                 await this.deleteAssociatedSprint(realTask);
               }
               await fetch(`/api/tasks?id=${task.id}`, {
                 method: 'DELETE'
               });
             }
-
             this.config.loadData();
           } catch (error) {
             message.error('Erro ao excluir tarefa(s). Tente novamente.');

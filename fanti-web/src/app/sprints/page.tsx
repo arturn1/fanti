@@ -31,7 +31,7 @@ import {
 import { useEffect, useState } from 'react';
 import CreateSprintModal from '@/app/sprints/components/CreateSprintModal';
 import EditSprintModal from '@/app/sprints/components/EditSprintModal';
-import ProductCard from '@/app/projects/components/ProductCard';
+import ProductCard from '@/app/sprints/components/ProductCard';
 import { calculateProductData, parseSprintStatus, ProductData as ProductDataType } from '@/utils/productCalculations';
 import dayjs from 'dayjs';
 import { useRouter } from 'next/navigation';

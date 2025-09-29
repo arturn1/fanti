@@ -20,19 +20,15 @@ export async function GET(req: NextRequest) {
             return NextResponse.json(response.data);
         }
         if (sprintId) {
-            const response = await api.get('/Tasks', { params: { sprintId } });
+            const response = await api.get(`/Tasks/sprint/${sprintId}`);
             return NextResponse.json(response.data);
         }
         if (parentTaskId) {
             const response = await api.get(`/Tasks/subtasks/${parentTaskId}`);
             return NextResponse.json(response.data);
         }
-        // Filtros genéricos
-        const filters: any = {};
-        for (const [key, value] of searchParams.entries()) {
-            if (!['id', 'projectId', 'sprintId', 'parentTaskId'].includes(key)) filters[key] = value;
-        }
-        const response = await api.get('/Tasks', { params: filters });
+
+        const response = await api.get('/Tasks');
         return NextResponse.json(response.data);
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });

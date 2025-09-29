@@ -88,40 +88,29 @@ export default function ProductCard({
 
   const statusConfig = getStatusConfig(productData.status);
 
+
   // Filtrar milestones em andamento baseado na data atual
   const today = dayjs();
-  const activeMilestones = productData.sprints.filter(sprint => {
-    // Milestone em andamento se:
-    // 1. Não está concluído E
-    // 2. Data atual está entre startDate e endDate
-    if (parseSprintStatus(sprint.status) === SprintStatus.Completed) return false;
-
+  // Sprints não concluídas (para o denominador)
+  const notCompletedMilestones = productData.sprints.filter(sprint => parseSprintStatus(sprint.status) !== SprintStatus.Completed);
+  // Sprints realmente "em andamento" (ativas, testando, planejamento, dentro do período)
+  const activeMilestones = notCompletedMilestones.filter(sprint => {
     const startDate = sprint.startDate ? dayjs(sprint.startDate) : null;
     const endDate = sprint.endDate ? dayjs(sprint.endDate) : null;
-
-    // Se não tem datas, considera em andamento se não está concluído
     if (!startDate && !endDate) return true;
-
-    // Se tem data de início, verificar se já começou
     const hasStarted = !startDate || today.isAfter(startDate) || today.isSame(startDate, 'day');
-
-    // Se tem data de fim, verificar se ainda não terminou
     const hasNotEnded = !endDate || today.isBefore(endDate) || today.isSame(endDate, 'day');
-
     return hasStarted && hasNotEnded;
   });
 
   // Estatísticas para exibição
   const milestonesCount = milestoneFilter === 'active'
-    ? `${activeMilestones.length}/${productData.sprints.length}`
+    ? `${activeMilestones.length}/${notCompletedMilestones.length}`
     : productData.sprints.length;
 
   const tasksDisplay = milestoneFilter === 'active'
     ? `${productData.completedTasks}/${productData.totalTasks}`
     : productData.tasks.filter(t => t.type != 'project').length;
-
-    console.log('Tasks:', productData.tasks);
-    console.log('tasksDisplay:', tasksDisplay);
 
   return (
     <Card

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Form, Input, Select, DatePicker, message } from 'antd';
 import { Sprint, Project, SprintStatus, Task, TaskType } from '@/types';
 import dayjs from 'dayjs';
-import { start } from 'repl';
+const { RangePicker } = DatePicker;
+
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -39,13 +40,15 @@ export default function EditSprintModal({
             if (typeof statusValue === 'string') {
                 statusValue = parseInt(statusValue, 10) as SprintStatus;
             }
+            const dateRange = sprint.startDate && sprint.endDate
+                            ? [dayjs(sprint.startDate), dayjs(sprint.endDate)]
+                            : undefined;
 
             const formValues = {
                 projectId: sprint.projectId,
                 name: sprint.name,
                 description: sprint.description || '',
-                startDate: sprint.startDate ? dayjs(sprint.startDate) : null,
-                endDate: sprint.endDate ? dayjs(sprint.endDate) : null,
+                dateRange: dateRange,
                 goal: sprint.goal || '',
                 status: statusValue,
             };
@@ -81,8 +84,8 @@ export default function EditSprintModal({
                 projectId: values.projectId,
                 name: values.name,
                 description: values.description || '',
-                startDate: values.startDate?.format('YYYY-MM-DD') || '',
-                endDate: values.endDate?.format('YYYY-MM-DD') || '',
+                startDate: values.dateRange[0].format('YYYY-MM-DD'),
+                endDate: values.dateRange[1].format('YYYY-MM-DD'),
                 goal: values.goal || '',
                 status: values.status.toString()
             };
@@ -93,11 +96,11 @@ export default function EditSprintModal({
                 body: JSON.stringify(sprintData),
             });
 
-            const allTasks: Task[] = await fetch(`/api/tasks`).then(res => res.json())
+            const allTasks: Task[] = await fetch(`/api/tasks?sprintId=${sprint.id}`).then(res => res.json())
                 .then(data => data.data as Task[]);
 
             const task: Task | undefined = allTasks.find(task => task.sprintId === sprint.id &&
-                task.type === TaskType.Project
+                task.type == 'project'
             );
 
             const updateData = {
@@ -106,8 +109,8 @@ export default function EditSprintModal({
                 progress: values.progress,
                 projectId: values.projectId,
                 sprintId: values.sprintId,
-                startDate: values.startDate?.format('YYYY-MM-DD'),
-                endDate: values.endDate?.format('YYYY-MM-DD')
+                startDate: values.dateRange[0].format('YYYY-MM-DD'),
+                endDate: values.dateRange[1].format('YYYY-MM-DD'),
             };
             const res = await fetch(`/api/tasks/${task?.id}`, {
                 method: 'PATCH',
@@ -119,6 +122,7 @@ export default function EditSprintModal({
             onSuccess();
             form.resetFields();
         } catch (error) {
+            console.error('Error ao atualizar sprint:', error);
             message.error('Erro ao atualizar sprint');
         } finally {
             setLoading(false);
@@ -153,7 +157,7 @@ export default function EditSprintModal({
                     label="Projeto"
                     rules={[{ required: true, message: 'Selecione um projeto' }]}
                 >
-                    <Select placeholder="Selecione um projeto">
+                    <Select placeholder="Selecione um projeto" disabled>
                         {projects.map(project => (
                             <Option key={project.id} value={project.id}>
                                 {project.name}
@@ -194,30 +198,16 @@ export default function EditSprintModal({
                     />
                 </Form.Item>
 
-                <div style={{ display: 'flex', gap: '16px' }}>
+                <div style={{}}>
                     <Form.Item
-                        name="startDate"
-                        label="Data de Início"
-                        rules={[{ required: true, message: 'Selecione a data de início' }]}
-                        style={{ flex: 1 }}
+                        name="dateRange"
+                        label="Período da Milestone"
+                        rules={[{ required: true, message: 'Selecione o período da milestone' }]}
                     >
-                        <DatePicker
+                        <RangePicker
                             style={{ width: '100%' }}
                             format="DD/MM/YYYY"
-                            placeholder="Data de início"
-                        />
-                    </Form.Item>
-
-                    <Form.Item
-                        name="endDate"
-                        label="Data de Fim"
-                        rules={[{ required: true, message: 'Selecione a data de fim' }]}
-                        style={{ flex: 1 }}
-                    >
-                        <DatePicker
-                            style={{ width: '100%' }}
-                            format="DD/MM/YYYY"
-                            placeholder="Data de fim"
+                            placeholder={['Data de início', 'Data de fim']}
                         />
                     </Form.Item>
                 </div>

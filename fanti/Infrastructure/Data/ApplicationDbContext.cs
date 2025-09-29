@@ -69,6 +69,12 @@ namespace Infrastructure.Data
                 .WithMany()
                 .HasForeignKey(tp => tp.SprintId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TaskDependenciesEntity>()
+            .HasOne(tp => tp.PredecessorTask)
+            .WithMany()
+            .HasForeignKey(tp => tp.PredecessorTaskId)
+            .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

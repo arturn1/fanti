@@ -109,11 +109,8 @@ function TasksPageContent() {
     if (selectedSprint !== 'all' && sprints.length > 0) {
       const currentSprint = sprints.find(s => s.id === selectedSprint);
       if (currentSprint) {
-        const sprintStatus = typeof currentSprint.status === 'string'
-          ? parseInt(currentSprint.status)
-          : currentSprint.status;
 
-        if (sprintStatus === 4) { // SprintStatus.Completed = 4
+        if (currentSprint.status === "3") { // SprintStatus.Completed = 3
           setSelectedSprint('all');
         }
       }
@@ -181,29 +178,43 @@ function TasksPageContent() {
       filteredTasks = filteredTasks.filter(task => task.sprintId === selectedSprint);
     }
 
+    // --- NOVA LÓGICA DE FILTRO POR EQUIPE ---
+    let teamFilteredTasks: Task[];
     if (selectedTeam !== 'all') {
-      filteredTasks = filteredTasks.filter(task => task.teamId === selectedTeam);
+      // 1. Filhos que pertencem à equipe filtrada
+      const childTasksInTeam = filteredTasks.filter(task => task.teamId === selectedTeam && !!task.parentTaskId);
+      // 2. Pais desses filhos
+      const parentIds = Array.from(new Set(childTasksInTeam.map(child => child.parentTaskId)));
+      const parentTasksOfChildren = filteredTasks.filter(task => parentIds.includes(task.id));
+      // 3. Tarefas "pai" que pertencem à equipe filtrada
+      const parentTasksInTeam = filteredTasks.filter(task => task.teamId === selectedTeam && !task.parentTaskId);
+      // 4. Tarefas sem parent (pais) que não são pais de filhos filtrados e não pertencem à equipe: não entram
+      // 5. Montar lista final: pais (da equipe ou de filhos), filhos da equipe
+      teamFilteredTasks = [
+        ...parentTasksInTeam,
+        ...parentTasksOfChildren,
+        ...childTasksInTeam
+      ];
+      // Remover duplicatas
+      teamFilteredTasks = teamFilteredTasks.filter((task, idx, arr) => arr.findIndex(t => t.id === task.id) === idx);
+    } else {
+      teamFilteredTasks = filteredTasks;
     }
 
     // Filtrar tarefas que não pertencem a milestones concluídas
-    filteredTasks = filteredTasks.filter(task => {
+    teamFilteredTasks = teamFilteredTasks.filter(task => {
       if (!task.sprintId) return true; // Tarefas sem milestone são incluídas
-
       const sprint = sprints.find(s => s.id === task.sprintId);
       if (!sprint) return true; // Se não encontrar a milestone, inclui a tarefa
-
-      // Converter status do backend para number se necessário
-      const sprintStatus = typeof sprint.status === 'string' ? parseInt(sprint.status) : sprint.status;
-      return sprintStatus !== 4; // SprintStatus.Completed = 4
+      return sprint.status !== "3"; // SprintStatus.Completed = 3
     });
 
     // Organizar tarefas por hierarquia (pais primeiro, depois filhos)
-    const parentTasks = filteredTasks.filter(task => !task.parentTaskId);
-    const childTasks = filteredTasks.filter(task => task.parentTaskId);
+    const parentTasks = teamFilteredTasks.filter(task => !task.parentTaskId);
+    const childTasks = teamFilteredTasks.filter(task => task.parentTaskId);
 
-    // Criar um array ordenado: pais seguidos de seus filhos
-    const orderedTasks: typeof filteredTasks = [];
-
+    // Para cada pai, só mostrar filhos que estão na lista filtrada
+    const orderedTasks: typeof teamFilteredTasks = [];
     parentTasks.forEach(parent => {
       orderedTasks.push(parent);
       const children = childTasks.filter(child => child.parentTaskId === parent.id);
@@ -309,12 +320,13 @@ function TasksPageContent() {
       : sprints.filter(sprint => sprint.projectId === selectedProject);
 
     // Filtrar apenas milestones que não estão concluídas (status !== 4)
+    console.log('Filtering available sprints, total:', projectFilteredSprints);
     return projectFilteredSprints.filter(sprint => {
       // Converter status do backend para number se necessário
-      const sprintStatus = typeof sprint.status === 'string' ? parseInt(sprint.status) : sprint.status;
-      return sprintStatus !== 4; // SprintStatus.Completed = 4
+      return sprint.status != "3"; // SprintStatus.Completed = 3
     });
   }, [sprints, selectedProject]);
+
 
   // Criar handlers do Gantt
   const ganttHandlers = createGanttHandlers({

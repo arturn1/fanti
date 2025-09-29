@@ -63,10 +63,6 @@ export const calculateProductData = (
       parseSprintStatus(sprint.status) !== SprintStatus.Completed
     );
 
-    if (productData.project.name === 'Financiamento') {
-      console.log('Sprints ativos:', activeSprints);
-    }
-
     // 2. TAREFAS: Contar APENAS tarefas que compõem as sprints ativas (não concluídas) e que NÃO são do tipo 'project'
     const sprintIds = activeSprints.map(sprint => sprint.id);
     const sprintTasks = productData.tasks.filter(task =>
@@ -79,7 +75,7 @@ export const calculateProductData = (
 
     // 3. PROGRESSO GERAL: Baseado APENAS nas tarefas do tipo 'project' dos sprints ativos, excluindo as completas
     const projectTasks = productData.tasks.filter(task =>
-      task.type === 'project' &&
+      task.type == 'project' &&
       task.sprintId && sprintIds.includes(task.sprintId) && // APENAS sprints ativos
       task.status !== TaskStatus.Done &&
       task.progress !== 100

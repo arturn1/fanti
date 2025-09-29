@@ -66,7 +66,9 @@ export default function ProjectsPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      const res = await fetch(`api/projects/${id}`);
+      const res = await fetch(`api/projects?id=${id}`, {
+        method: 'DELETE'
+      });
       if (res.ok) {
         message.success('Produto excluído com sucesso!');
         loadProjects();

@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  reactStrictMode: false,
   typescript: {
     // Durante o build, ignora erros de TypeScript se necessário
     ignoreBuildErrors: false,

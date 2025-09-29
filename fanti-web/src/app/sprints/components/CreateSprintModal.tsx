@@ -62,7 +62,7 @@ export default function CreateSprintModal({ visible, onClose, onSuccess, project
         Description: values.description ?
           `Sprint: ${values.name}\nObjetivo: ${values.goal}\nDescrição: ${values.description}` :
           `Sprint: ${values.name}\nObjetivo: ${values.goal}`,
-        Status: 1, // Status inicial (Backlog)
+        Status: 0, // Status inicial (Backlog)
         StartDate: values.dateRange[0].toISOString(),
         EndDate: values.dateRange[1].toISOString(),
       };

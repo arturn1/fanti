@@ -267,6 +267,7 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updateData)
       });
+
       if (res.ok) {
         message.success('Tarefa atualizada com sucesso!');
         onSuccess();

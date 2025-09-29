@@ -79,6 +79,15 @@ namespace API.Controllers
             return Ok(new CommandResult(subtasks, HttpStatusCode.OK));
         }
 
+        [HttpGet("sprint/{sprintId}")]
+        public async Task<IActionResult> GetSubtasksBySprintIdAsync(Guid sprintId)
+        {
+            var models = await _TasksRepository.GetAllAsync();
+            var subtasks = models.Where(t => t.SprintId == sprintId).ToList();
+
+            return Ok(new CommandResult(subtasks, HttpStatusCode.OK));
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTaskAsync(Guid id, [FromServices] TasksHandler handler)
         {
