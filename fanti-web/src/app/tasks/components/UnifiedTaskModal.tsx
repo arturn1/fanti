@@ -56,7 +56,7 @@ const TasksPeriodsTab: React.FC<TasksPeriodsTabProps> = ({ task }) => {
   const [periods, setPeriods] = useState<Period[]>([]);
 
   useEffect(() => {
-    if (!task?.projectId) return;
+    if (!task) return;
     setLoading(true);
     Promise.all([
       fetch('/api/tasksPeriod').then(res => res.json()),
@@ -95,7 +95,7 @@ const TasksPeriodsTab: React.FC<TasksPeriodsTabProps> = ({ task }) => {
         setPeriods([]);
       })
       .finally(() => setLoading(false));
-  }, [task?.projectId]);
+  }, [task]);
 
   // Helper to get staff name from periodStaffId
   const getStaffName = (periodStaffId: string) => {
@@ -368,8 +368,7 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
               </Col>
             </Row>
 
-
-            <Row gutter={16}>
+            {!isProjectType ? (<Row gutter={16}>
               <Col span={12}>
                 <Form.Item
                   name="type"
@@ -409,7 +408,8 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
                   </Select>
                 </Form.Item>
               </Col>
-            </Row>
+            </Row>) : null
+            }
 
             <Row gutter={16}>
               <Col span={12}>

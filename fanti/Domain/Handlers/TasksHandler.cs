@@ -61,12 +61,25 @@ namespace Domain.Handlers
             entity.Type = command.Type.GetDisplayName();
             command.Type = null; // Limpar para evitar sobrescrever com nulo
             _mapper.Map(command, entity);
+            UpdateProgress(command, entity);
             await _TasksRepository.UpdateAsync(entity);
 
             // Atualizar tarefa pai se existir
             await UpdateParentTaskIfExists(entity);
 
             return new CommandResult(entity, HttpStatusCode.OK);
+        }
+
+        private static void UpdateProgress(UpdateTasksCommand command, TasksEntity entity)
+        {
+            if (command.Status == Domain.Enum.TaskStatus.Done)
+            {
+                entity.Progress = 100;
+            }
+            else if (command.Status == Domain.Enum.TaskStatus.ToDo)
+            {
+                entity.Progress = 0;
+            }
         }
         public async Task<ICommandResult> Handle(UpdateTaskFieldsCommand command)
         {

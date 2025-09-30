@@ -31,11 +31,8 @@ namespace Domain.Enum
 
     public enum TaskStatus
     {
-        Backlog,
         ToDo,
         InProgress,
-        InReview,
-        Testing,
         Done
     }
 

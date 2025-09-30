@@ -218,7 +218,12 @@ export const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
               style={{ width: '100%', flex: 1 }}
               format="DD/MM/YYYY"
               placeholder={['Data de início', 'Data de fim']}
-              disabledDate={(current) => current && current < dayjs().startOf('day')}
+              disabledDate={(current) => {
+                if (!parentTask || !parentTask.startDate || !parentTask.endDate) return false;
+                const start = dayjs(parentTask.startDate).startOf('day');
+                const end = dayjs(parentTask.endDate).endOf('day');
+                return current && (current < start || current > end);
+              }}
             />
           </Form.Item>
         </Space.Compact>

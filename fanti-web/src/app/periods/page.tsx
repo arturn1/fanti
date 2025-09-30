@@ -1,8 +1,11 @@
 "use client";
 import { CalendarOutlined, DeleteOutlined, EditOutlined, EyeOutlined, LineChartOutlined, PlusOutlined } from '@ant-design/icons';
-import { App, Button, Card, Col, DatePicker, Descriptions, Form, Input, InputNumber, Modal, Popconfirm, Row, Select, Space, Table, Tag, Typography } from 'antd';
+import { App, Button, Card, Col, DatePicker, Form, Input, InputNumber, Modal, Popconfirm, Row, Select, Space, Table, Tag, Typography } from 'antd';
 import dayjs from 'dayjs';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import PeriodDetails from './components/PeriodDetails';
+import PeriodOrganization from './components/PeriodOrganization';
+// Controla abertura pendente do modal e o tipo (view/org)
 import { useModals } from '../../hooks/useModals';
 import { useOrganization } from '../../hooks/useOrganization';
 import { Period, PeriodStaff, Project, Staff, TasksPeriod } from '../../types';
@@ -14,6 +17,8 @@ export default function PeriodsPage() {
     const { message } = App.useApp();
 
     // Data states
+    const [pendingModal, setPendingModal] = useState<{ type: 'view' | 'org', period: Period | null } | null>(null);
+    const [refreshing, setRefreshing] = useState(false);
     const [periods, setPeriods] = useState<Period[]>([]);
     const [staffs, setStaffs] = useState<Staff[]>([]);
     const [periodStaffs, setPeriodStaffs] = useState<PeriodStaff[]>([]);
@@ -67,60 +72,6 @@ export default function PeriodsPage() {
         const pastDaysOfYear = (now.getTime() - firstDayOfYear.getTime()) / 86400000;
         return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
     }, []);
-    // Calculate period metrics for viewing modal
-    const periodMetrics = useMemo(() => {
-        if (!modalsHook.modalData.viewingPeriod) return null;
-
-        const periodId = modalsHook.modalData.viewingPeriod.id;
-
-        // Horas totais no período (soma de totalHours de todos os PeriodStaff do período)
-        const totalPeriodHours = periodStaffs
-            .filter(ps => ps.periodId === periodId)
-            .reduce((sum, ps) => sum + ps.totalHours, 0);
-
-        // Horas atribuídas (soma de taskHours de todas as TasksPeriod do período)
-        const assignedHours = tasksPeriod
-            .filter(tp => {
-                // Encontrar o PeriodStaff relacionado e verificar se pertence ao período
-                const relatedPeriodStaff = periodStaffs.find(ps => ps.id === tp.periodStaffId);
-                return relatedPeriodStaff?.periodId === periodId;
-            })
-            .reduce((sum, tp) => sum + tp.taskHours, 0);
-
-        // Horas restantes (total - atribuídas)
-        const remainingHours = totalPeriodHours - assignedHours;
-
-        // Percentual de utilização
-        const utilizationPercentage = totalPeriodHours > 0 ? (assignedHours / totalPeriodHours) * 100 : 0;
-
-        // Horas totais por projeto (apenas projetos com horas > 0)
-        const projectHoursMap: Record<string, number> = {};
-        tasksPeriod
-            .filter(tp => {
-                const relatedPeriodStaff = periodStaffs.find(ps => ps.id === tp.periodStaffId);
-                return relatedPeriodStaff?.periodId === periodId && tp.projectId !== undefined && tp.projectId !== null;
-            })
-            .forEach(tp => {
-                const projectId = String(tp.projectId);
-                if (!projectHoursMap[projectId]) projectHoursMap[projectId] = 0;
-                projectHoursMap[projectId] += tp.taskHours;
-            });
-        // Array de projetos com horas > 0
-        const projectHours = Object.entries(projectHoursMap)
-            .filter(([_, hours]) => typeof hours === 'number' && hours > 0)
-            .map(([projectId, hours]) => {
-                const project = projects.find(p => String(p.id) === projectId);
-                return { projectId, projectName: project?.name || 'Projeto não encontrado', hours };
-            });
-
-        return {
-            totalPeriodHours,
-            assignedHours,
-            remainingHours,
-            utilizationPercentage,
-            projectHours
-        };
-    }, [modalsHook.modalData.viewingPeriod, periodStaffs, tasksPeriod, projects]);
 
     // Fetch functions
     const fetchStaffs = useCallback(async () => {
@@ -155,11 +106,13 @@ export default function PeriodsPage() {
 
     // Centralized data refresh function
     const refreshAllData = useCallback(async () => {
+        setRefreshing(true);
         await fetchStaffs();
         await fetchPeriodStaffs();
         await fetchTasksPeriod();
         await fetchProjects();
         await fetchPeriods(); // Ensure periods are loaded last with all dependencies
+        setRefreshing(false);
     }, []); // Remove dependencies to avoid circular reference
 
     const fetchPeriods = useCallback(async () => {
@@ -222,50 +175,44 @@ export default function PeriodsPage() {
     }, [periodStaffs, form, modalsHook]);
 
     const handleView = useCallback(async (period: Period) => {
-        // Refresh all data to ensure most up-to-date information
+        setPendingModal({ type: 'view', period });
         await refreshAllData();
-
-        // Get the fresh period data from the updated periods list
-        const freshPeriods = await fetch('/api/periods').then(res => res.json()).then(data => data?.data || []);
-        const updatedPeriod = freshPeriods.find((p: Period) => p.id === period.id);
-
-        if (updatedPeriod) {
-            // Join with staffs data
-            const relatedStaffIds = periodStaffs.filter(ps => ps.periodId === updatedPeriod.id).map(ps => ps.staffId);
-            const staffsList = relatedStaffIds.map(id => staffs.find(s => s.id === id)).filter(Boolean);
-            const periodWithStaffs = { ...updatedPeriod, staffs: staffsList };
-
-            modalsHook.openViewModal(periodWithStaffs);
-        } else {
-            // Fallback to original period if not found
-            modalsHook.openViewModal(period);
-        }
-    }, [refreshAllData, modalsHook, periodStaffs, staffs]);
+    }, [refreshAllData]);
 
     const handleOrg = useCallback(async (period: Period) => {
-        // Refresh all data before opening organization modal
+        setPendingModal({ type: 'org', period });
         await refreshAllData();
-
-        // Get the fresh period data from the updated periods list
-        const freshPeriods = await fetch('/api/periods').then(res => res.json()).then(data => data?.data || []);
-        const updatedPeriod = freshPeriods.find((p: Period) => p.id === period.id);
-
+    }, [refreshAllData]);
+    // Efeito para abrir o modal só após refreshAllData e atualização dos estados
+    useEffect(() => {
+        if (!pendingModal || refreshing) return;
+        const { type, period } = pendingModal;
+        if (!period) return;
+        const updatedPeriod = periods.find((p: Period) => p.id === period.id);
         if (updatedPeriod) {
-            // Join with staffs data
             const relatedStaffIds = periodStaffs.filter(ps => ps.periodId === updatedPeriod.id).map(ps => ps.staffId);
-            const staffsList = relatedStaffIds.map(id => staffs.find(s => s.id === id)).filter(Boolean);
+            const staffsList = relatedStaffIds
+                .map(id => staffs.find(s => s.id === id))
+                .filter((s): s is Staff => Boolean(s));
             const periodWithStaffs = { ...updatedPeriod, staffs: staffsList };
-
-            setOrganizingPeriod(periodWithStaffs);
-            organizationHook.initializeOrgData(periodWithStaffs);
-            modalsHook.openOrganizationModal(periodWithStaffs);
+            if (type === 'view') {
+                modalsHook.openViewModal(periodWithStaffs);
+            } else {
+                setOrganizingPeriod(periodWithStaffs);
+                organizationHook.initializeOrgData(periodWithStaffs);
+                modalsHook.openOrganizationModal(periodWithStaffs);
+            }
         } else {
-            // Fallback to original period if not found
-            setOrganizingPeriod(period);
-            organizationHook.initializeOrgData(period);
-            modalsHook.openOrganizationModal(period);
+            if (type === 'view') {
+                modalsHook.openViewModal(period);
+            } else {
+                setOrganizingPeriod(period);
+                organizationHook.initializeOrgData(period);
+                modalsHook.openOrganizationModal(period);
+            }
         }
-    }, [refreshAllData, modalsHook, organizationHook, periodStaffs, staffs]);
+        setPendingModal(null);
+    }, [pendingModal, periods, staffs, periodStaffs, modalsHook, organizationHook]);
 
     const handleDelete = async (id: string) => {
         try {
@@ -467,152 +414,39 @@ export default function PeriodsPage() {
                 </Form>
             </Modal>
             <Modal
-                title="Detalhes do Período"
+                closeIcon={false}
                 open={modalsHook.modals.view}
-                onCancel={() => modalsHook.closeModal('view')}
                 footer={null}
-                width={600}
+                width={900}
+                onCancel={() => modalsHook.closeModal('view')}
             >
                 {modalsHook.modalData.viewingPeriod && (
-                    <div>
-                        <Descriptions title="Informações do Período" bordered column={1}>
-                            <Descriptions.Item label="Nome">{modalsHook.modalData.viewingPeriod.name}</Descriptions.Item>
-                            <Descriptions.Item label="Data de Início">{modalsHook.modalData.viewingPeriod.startDate ? dayjs(modalsHook.modalData.viewingPeriod.startDate).format('DD/MM/YYYY') : '-'}</Descriptions.Item>
-                            <Descriptions.Item label="Data de Fim">{modalsHook.modalData.viewingPeriod.endDate ? dayjs(modalsHook.modalData.viewingPeriod.endDate).format('DD/MM/YYYY') : '-'}</Descriptions.Item>
-                            <Descriptions.Item label="Colaboradores">
-                                {modalsHook.modalData.viewingPeriod.staffs && modalsHook.modalData.viewingPeriod.staffs.length > 0 ? modalsHook.modalData.viewingPeriod.staffs.map((s: Staff) => s.name).join(', ') : '-'}
-                            </Descriptions.Item>
-                        </Descriptions>
-
-                        {periodMetrics && (
-                            <>
-                                <Descriptions title="Métricas de Horas" bordered column={2} style={{ marginTop: 24 }}>
-                                    <Descriptions.Item label="Horas Totais no Período">
-                                        <Text strong style={{ fontSize: '16px' }}>{periodMetrics.totalPeriodHours}h</Text>
-                                    </Descriptions.Item>
-                                    <Descriptions.Item label="Horas Atribuídas">
-                                        <Text strong style={{ fontSize: '16px', color: '#1890ff' }}>{periodMetrics.assignedHours}h</Text>
-                                    </Descriptions.Item>
-                                    <Descriptions.Item label="Horas Restantes">
-                                        <Text strong style={{ fontSize: '16px', color: periodMetrics.remainingHours >= 0 ? '#52c41a' : '#ff4d4f' }}>
-                                            {periodMetrics.remainingHours}h
-                                        </Text>
-                                    </Descriptions.Item>
-                                    <Descriptions.Item label="Taxa de Utilização">
-                                        <Text strong style={{ fontSize: '16px', color: periodMetrics.utilizationPercentage > 100 ? '#ff4d4f' : periodMetrics.utilizationPercentage > 80 ? '#faad14' : '#52c41a' }}>
-                                            {periodMetrics.utilizationPercentage.toFixed(1)}%
-                                        </Text>
-                                    </Descriptions.Item>
-                                </Descriptions>
-                                {/* Novo campo: Horas totais por Projeto */}
-                                <Descriptions title="Horas por Projeto" bordered column={1} style={{ marginTop: 24 }}>
-                                    {periodMetrics.projectHours.length > 0 ? (
-                                        periodMetrics.projectHours.map(ph => (
-                                            <Descriptions.Item key={ph.projectId} label={ph.projectName}>
-                                                <Text strong style={{ fontSize: '15px' }}>{Number(ph.hours)}h</Text>
-                                            </Descriptions.Item>
-                                        ))
-                                    ) : (
-                                        <Descriptions.Item label="Nenhum projeto com horas">-</Descriptions.Item>
-                                    )}
-                                </Descriptions>
-                            </>
-                        )}
-                    </div>
+                    <PeriodDetails
+                        period={modalsHook.modalData.viewingPeriod}
+                        periodStaffs={periodStaffs}
+                        tasksPeriod={tasksPeriod}
+                        projects={projects}
+                    />
                 )}
             </Modal>
             <Modal
-                title={`Organização do Período: ${modalsHook.modalData.organizingPeriod?.name}`}
                 open={modalsHook.modals.organization}
                 onCancel={() => modalsHook.closeModal('organization')}
-                width={1200}
+                width={1000}
                 footer={null}
+                closeIcon={false}
             >
                 {modalsHook.modalData.organizingPeriod && (
-                    <div>
-                        {modalsHook.modalData.organizingPeriod.staffs?.map(staff => {
-                            const data = organizationHook.orgData[staff.id];
-                            if (!data) return null;
-                            return (
-                                <Card key={staff.id} style={{ marginBottom: 16 }}>
-                                    <Typography.Title level={4}>{staff.name}</Typography.Title>
-                                    {/* Total de Horas e Horas Restantes */}
-                                    <Form layout="inline" style={{ marginBottom: 16 }}>
-                                        <Form.Item label="Total de Horas">
-                                            <InputNumber value={data.totalHours} onChange={(v) => updateTotalHours(staff.id, v || 0)} />
-                                        </Form.Item>
-                                        <Form.Item label="Horas Restantes">
-                                            <Input value={data.remaining} disabled />
-                                        </Form.Item>
-                                    </Form>
-                                    {/* Lista de Tasks */}
-                                    <div style={{ marginBottom: 16 }}>
-                                        <Typography.Text strong style={{ marginBottom: 8, display: 'block' }}>Tasks Atribuídas:</Typography.Text>
-                                        {data.tasks.map((task, index) => {
-                                            const projectName = projects.find(p => p.id === task.projectId)?.name || 'Projeto não encontrado';
-                                            return (
-                                                <Tag key={task.id || index} closable onClose={() => removeTask(staff.id, index)} color={getTaskColor(task.hours)} style={{ marginBottom: 4, marginRight: 8 }}>
-                                                    Task {task.number} ({projectName}): {task.hours}h
-                                                </Tag>
-                                            );
-                                        })}
-                                    </div>
-                                    {/* Form para adicionar nova Task */}
-                                    <Form layout="inline">
-                                        <Form.Item label="Projeto">
-                                            <Select
-                                                style={{ minWidth: 180 }}
-                                                placeholder="Selecione o projeto"
-                                                value={organizationHook.newTaskInputs[staff.id]?.projectId || undefined}
-                                                onChange={projectId => organizationHook.setNewTaskInputs(prev => ({
-                                                    ...prev,
-                                                    [staff.id]: { ...prev[staff.id], projectId }
-                                                }))}
-                                            >
-                                                {projects.map(project => (
-                                                    <Option key={project.id} value={project.id}>{project.name}</Option>
-                                                ))}
-                                            </Select>
-                                        </Form.Item>
-                                        <Form.Item label="Número da Task">
-                                            <Input
-                                                style={{ width: 120 }}
-                                                value={organizationHook.newTaskInputs[staff.id]?.number || ''}
-                                                onChange={(e) => organizationHook.setNewTaskInputs(prev => ({
-                                                    ...prev,
-                                                    [staff.id]: { ...prev[staff.id], number: e.target.value }
-                                                }))}
-                                            />
-                                        </Form.Item>
-                                        <Form.Item label="Horas">
-                                            <InputNumber
-                                                style={{ width: 100 }}
-                                                value={organizationHook.newTaskInputs[staff.id]?.hours || 0}
-                                                onChange={(v) => organizationHook.setNewTaskInputs(prev => ({
-                                                    ...prev,
-                                                    [staff.id]: { ...prev[staff.id], hours: v || 0 }
-                                                }))}
-                                            />
-                                        </Form.Item>
-                                        <Form.Item>
-                                            <Button
-                                                type="primary"
-                                                onClick={() => addTask(staff.id)}
-                                                disabled={
-                                                    !organizationHook.newTaskInputs[staff.id]?.number ||
-                                                    !organizationHook.newTaskInputs[staff.id]?.hours ||
-                                                    !organizationHook.newTaskInputs[staff.id]?.projectId ||
-                                                    data.remaining < (organizationHook.newTaskInputs[staff.id]?.hours || 0)
-                                                }
-                                            >
-                                                Adicionar Task
-                                            </Button>
-                                        </Form.Item>
-                                    </Form>
-                                </Card>
-                            );
-                        })}
-                    </div>
+                    <PeriodOrganization
+                        organizingPeriod={modalsHook.modalData.organizingPeriod}
+                        projects={projects}
+                        organizationHook={organizationHook}
+                        updateTotalHours={updateTotalHours}
+                        addTask={addTask}
+                        removeTask={removeTask}
+                        getTaskColor={getTaskColor}
+                        onBack={() => modalsHook.closeModal('organization')}
+                    />
                 )}
             </Modal>
         </div>

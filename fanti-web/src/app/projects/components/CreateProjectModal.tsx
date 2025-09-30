@@ -116,14 +116,13 @@ export default function CreateProjectModal({ visible, onClose, onSuccess }: Crea
 
                 <Form.Item
                     name="dateRange"
-                    label="Período do Produto (Opcional)"
+                    label="Período do Produto"
                     rules={[{ required: true, message: 'Selecione o período do produto' }]}
                 >
                     <RangePicker
                         style={{ width: '100%' }}
                         format="DD/MM/YYYY"
                         placeholder={['Data de início', 'Data de fim']}
-                        disabledDate={(current) => current && current < dayjs().startOf('day')}
                     />
                 </Form.Item>
 

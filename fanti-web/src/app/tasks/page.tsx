@@ -130,7 +130,6 @@ function TasksPageContent() {
   }, []);
 
   const loadData = async () => {
-    console.log('Loading data...');
     try {
       setLoading(true);
       const [tasksRes, projectsRes, sprintsRes, dependenciesRes] = await Promise.all([
@@ -232,21 +231,6 @@ function TasksPageContent() {
       const endDate = task.endDate ? dayjs(task.endDate).toDate() : dayjs().add(1, 'day').toDate();
 
       let progress = task.progress || 0;
-      if (progress === 0) {
-        switch (task.status) {
-          case TaskStatus.Done:
-            progress = 100;
-            break;
-          case TaskStatus.InProgress:
-            progress = 50;
-            break;
-          case TaskStatus.ToDo:
-            progress = 10;
-            break;
-          default:
-            progress = 0;
-        }
-      }
 
       const taskDependencies = (dependencies || [])
         .filter(dep => {
@@ -403,29 +387,6 @@ function TasksPageContent() {
                 <Option value={ViewMode.Month}>Mês</Option>
               </Select>
             </Space>
-          </Col>
-          <Col
-            xs={24}
-            sm={12}
-            md={8}>
-            <div>
-              <Space>
-                <Button
-                  icon={<UserOutlined />}
-                  onClick={() => handleOpenManagement('team')}
-                  disabled={!selectedTaskForUnified}
-                >
-                  Gerenciar Equipes
-                </Button>
-                <Button
-                  icon={<LinkOutlined />}
-                  onClick={() => handleOpenManagement('dependencies')}
-                  disabled={!selectedTaskForUnified}
-                >
-                  Gerenciar Dependências
-                </Button>
-              </Space>
-            </div>
           </Col>
         </Row>
       </Card>

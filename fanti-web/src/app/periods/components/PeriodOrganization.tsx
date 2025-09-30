@@ -1,6 +1,7 @@
 "use client";
-import React from 'react';
-import { Button, Form, Input, Typography, Card, Select, InputNumber, Tag, Space } from 'antd';
+import React, { useRef } from 'react';
+import { Button, Form, Input, Typography, Card, Select, InputNumber, Tag, Space, Row, Col, Tooltip, Table } from 'antd';
+import { PlusOutlined, SyncOutlined } from '@ant-design/icons';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Staff, Period, Project, TaskItem } from '../../../types';
 
@@ -29,61 +30,111 @@ export default function PeriodOrganization({
   onBack
 }: PeriodOrganizationProps) {
   return (
-    <div style={{ padding: 24, height: '100%', overflow: 'auto' }}>
-      {/* Header com botão voltar */}
-      <div style={{ marginBottom: 24 }}>
-        <Button
-          icon={<ArrowLeftOutlined />}
-          onClick={onBack}
-          style={{ marginBottom: 16 }}
-        >
-          Voltar para Períodos
-        </Button>
-        <Typography.Title level={2} style={{ margin: 0 }}>
-          Organização do Período: {organizingPeriod.name}
-        </Typography.Title>
-      </div>
-
+    <div style={{ padding: 0, height: '100%', overflow: 'auto' }}>
       {/* Cards de colaboradores */}
       <div>
         {organizingPeriod.staffs?.map((staff: Staff) => {
           const data = organizationHook.orgData[staff.id];
           if (!data) return null;
 
+
           return (
-            <Card key={staff.id} style={{ marginBottom: 16 }}>
-              <Typography.Title level={4}>{staff.name}</Typography.Title>
+            <Card key={staff.id} style={{ marginBottom: 14 }}
 
-              {/* Total de Horas e Horas Restantes */}
-              <Form layout="inline" style={{ marginBottom: 16 }}>
-                <Form.Item label="Total de Horas">
-                  <InputNumber value={data.totalHours} onChange={(v) => updateTotalHours(staff.id, v || 0)} />
-                </Form.Item>
-                <Form.Item label="Horas Restantes">
-                  <Input value={data.remaining} disabled />
-                </Form.Item>
-              </Form>
+            >
+              <Row gutter={10} align="middle" style={{ marginBottom: 18 }}>
+                <Col flex="auto">
+                  <Text strong style={{ fontSize: 18 }}>{staff.name}</Text>
+                </Col>
+                <Col>
+                  <Text strong>Total:</Text>
+                </Col>
+                <Col>
+                  <InputNumber
+                    min={0}
+                    value={data.totalHours}
+                    onChange={v => updateTotalHours(staff.id, v ?? 0)}
+                    style={{ width: 80 }}
+                  />
+                </Col>
+                <Col>
+                  <Tooltip title="Atualizar total de horas">
+                    <Button
+                      icon={<SyncOutlined style={{ fontSize: 13 }} />}
+                      size="small"
+                      shape="circle"
+                      type="primary"
+                      style={{ width: 22, height: 22, minWidth: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+                      onClick={() => {
+                        updateTotalHours(staff.id, organizationHook.editTotals?.[staff.id]);
+                        if (typeof organizationHook.setEditTotals === 'function') {
+                          organizationHook.setEditTotals((prev: any) => ({ ...prev, [staff.id]: undefined }));
+                        }
+                      }}
+                    />
+                  </Tooltip>
+                </Col>
+                <Col>
+                  <Text type="secondary">Restantes:</Text>
+                </Col>
+                <Col>
+                  <Input value={data.remaining} disabled style={{ width: 70, background: '#fafafa', color: '#222' }} />
+                </Col>
+              </Row>
 
-              {/* Lista de Tasks */}
-              <div style={{ marginBottom: 16 }}>
-                <Typography.Text strong style={{ marginBottom: 8, display: 'block' }}>Tasks Atribuídas:</Typography.Text>
-                <Space wrap>
-                  {data.tasks.map((task: TaskItem, index: number) => {
-                    const projectName = projects.find(p => p.id === task.projectId)?.name || 'Projeto não encontrado';
-                    return (
-                      <Tag key={task.id || index} closable onClose={() => removeTask(staff.id, index)} color={getTaskColor(task.hours)}>
-                        Task {task.number} ({projectName}): {task.hours}h
-                      </Tag>
-                    );
-                  })}
-                </Space>
+              {/* Lista de Tasks agrupadas por projeto em Card e tabela */}
+
+              <div style={{ marginBottom: 16, marginTop: 10 }}>
+                {(() => {
+                  const grouped: Record<string, TaskItem[]> = {};
+                  data.tasks.forEach((task: TaskItem) => {
+                    const key = String(task.projectId ?? '0');
+                    if (!grouped[key]) grouped[key] = [];
+                    grouped[key].push(task);
+                  });
+                  const rows: { project: string; number: string; hours: number; idx: number; task: TaskItem }[] = [];
+                  Object.entries(grouped).forEach(([projectId, tasks]) => {
+                    const projectName = projects.find(p => String(p.id) === projectId)?.name || 'Projeto não encontrado';
+                    tasks.forEach((task, idx) => {
+                      rows.push({ project: projectName, number: String(task.number ?? ''), hours: task.hours, idx: data.tasks.indexOf(task), task });
+                    });
+                  });
+                  return (
+                    <Table
+                      size="small"
+                      bordered
+                      pagination={false}
+                      dataSource={rows}
+                      rowKey={r => `${r.project}-${r.number}-${r.idx}`}
+                      columns={[
+                        { title: 'Projeto', dataIndex: 'project', key: 'project', render: (text: string) => <span style={{ fontWeight: 500 }}>{text}</span> },
+                        { title: 'Nº Task', dataIndex: 'number', key: 'number', align: 'center' as const },
+                        { title: 'Horas', dataIndex: 'hours', key: 'hours', align: 'center' as const, render: (v: number, r) => <Tag color={getTaskColor(v)}>{v}h</Tag> },
+                        {
+                          title: '',
+                          key: 'actions',
+                          align: 'center' as const,
+                          render: (_: any, r) => (
+                            <Button size="small" danger type="text" onClick={() => removeTask(staff.id, r.idx)}>
+                              Remover
+                            </Button>
+                          )
+                        }
+                      ]}
+                      style={{ marginTop: 8 }}
+                    />
+                  );
+                })()}
               </div>
 
               {/* Form para adicionar nova Task */}
-              <Form layout="inline">
-                <Form.Item label="Projeto">
+              <Row gutter={10} align="middle" style={{ marginBottom: 2 }}>
+                <Col>
+                  <Text strong>Projeto:</Text>
+                </Col>
+                <Col>
                   <Select
-                    style={{ minWidth: 180 }}
+                    style={{ minWidth: 150 }}
                     placeholder="Selecione o projeto"
                     value={organizationHook.newTaskInputs[staff.id]?.projectId || undefined}
                     onChange={(projectId: string) => organizationHook.setNewTaskInputs((prev: any) => ({
@@ -95,30 +146,38 @@ export default function PeriodOrganization({
                       <Option key={project.id} value={project.id}>{project.name}</Option>
                     ))}
                   </Select>
-                </Form.Item>
-                <Form.Item label="Número da Task">
+                </Col>
+                <Col>
+                  <Text strong>Nº Task:</Text>
+                </Col>
+                <Col>
                   <Input
-                    style={{ width: 120 }}
+                    style={{ width: 90 }}
                     value={organizationHook.newTaskInputs[staff.id]?.number || ''}
                     onChange={(e: any) => organizationHook.setNewTaskInputs((prev: any) => ({
                       ...prev,
                       [staff.id]: { ...prev[staff.id], number: e.target.value }
                     }))}
                   />
-                </Form.Item>
-                <Form.Item label="Horas">
+                </Col>
+                <Col>
+                  <Text strong>Horas:</Text>
+                </Col>
+                <Col>
                   <InputNumber
-                    style={{ width: 100 }}
+                    style={{ width: 70 }}
                     value={organizationHook.newTaskInputs[staff.id]?.hours || 0}
                     onChange={(v: number | null) => organizationHook.setNewTaskInputs((prev: any) => ({
                       ...prev,
                       [staff.id]: { ...prev[staff.id], hours: v || 0 }
                     }))}
                   />
-                </Form.Item>
-                <Form.Item>
+                </Col>
+                <Col flex="auto" />
+                <Col style={{ textAlign: 'right' }}>
                   <Button
                     type="primary"
+                    style={{ width: 90 }}
                     onClick={() => addTask(staff.id)}
                     disabled={
                       !organizationHook.newTaskInputs[staff.id]?.number ||
@@ -127,10 +186,10 @@ export default function PeriodOrganization({
                       data.remaining < (organizationHook.newTaskInputs[staff.id]?.hours || 0)
                     }
                   >
-                    Adicionar Task
+                    Adicionar
                   </Button>
-                </Form.Item>
-              </Form>
+                </Col>
+              </Row>
             </Card>
           );
         })}

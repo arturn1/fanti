@@ -1,0 +1,44 @@
+# .dockerignore para maximizar build Next.js
+
+# Node
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Next.js
+.next
+out
+
+# Test/coverage
+coverage
+*.lcov
+
+# Editor/OS
+.DS_Store
+*.swp
+*.swo
+.idea
+.vscode
+*.iml
+
+# Git
+.git
+.gitignore
+
+# Env
+.env*
+
+# Logs
+logs
+*.log
+
+# Docker
+Dockerfile*
+docker-compose*
+
+# Outros
+*.md
+*.tsbuildinfo
+
+# Não copiar arquivos de configuração locais
+*.local

@@ -283,7 +283,7 @@ export default function TeamsAndStaffPage() {
                     <Form.Item
                         name="description"
                         label="Descrição"
-                        rules={[{ max: 200, message: 'Descrição deve ter no máximo 200 caracteres' }]}
+                        rules={[{ max: 200, message: 'Descrição deve ter no máximo 200 caracteres', required: true }]}
                     >
                         <Input placeholder="Descrição da equipe (opcional)" />
                     </Form.Item>
