@@ -29,7 +29,6 @@ export default function AppHeader() {
     try {
       await logout();
       message.success('Logout realizado com sucesso!');
-      router.push('/login');
     } catch (error) {
       console.error('Erro no logout:', error);
       message.error('Erro ao fazer logout');

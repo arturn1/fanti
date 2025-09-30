@@ -8,7 +8,7 @@ const IS4Provider = {
     wellKnown: `${process.env.OAUTH2_ISSUER}/.well-known/openid-configuration`,
     clientId: process.env.OAUTH2_CLIENTID,
     clientSecret: process.env.OAUTH2_SECRET,
-    issuer: process.env.OAUTH2_ISSUER,
+    issuer: process.env.OAUTH2_ISSUER || "https://connect-staging.fi-group.com/identity",
     authorization: {
         params: {
             scope: process.env.OAUTH2_SCOPE || "openid profile email",

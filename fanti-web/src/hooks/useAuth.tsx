@@ -283,13 +283,13 @@ export function useAuth(): AuthContextType {
     if (typeof window !== "undefined") {
       localStorage.removeItem('manual_user');
       // Limpa manual_user ao fazer logout
-      localStorage.removeItem('manual_user');
       if (window.location.hash) {
         history.replaceState(null, '', window.location.pathname + window.location.search);
       }
       // Busca o endpoint de logout do well-known
       try {
-        const issuer = process.env.OAUTH2_ISSUER;
+        debugger;
+        const issuer = process.env.OAUTH2_ISSUER || `https://connect-staging.fi-group.com/identity`;
         if (issuer) {
           const res = await fetch(`${issuer}/.well-known/openid-configuration`);
           const config = await res.json();
@@ -307,7 +307,6 @@ export function useAuth(): AuthContextType {
       // fallback: recarrega a página
       window.location.reload();
     }
-    await signOut({ callbackUrl: "/login" });
   }, []);
 
   const refreshUser = useCallback(() => {
