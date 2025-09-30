@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Layout, Spin } from 'antd';
 import { useRouter } from 'next/navigation';
 import AppHeader from './AppHeader';
+import { useAuth } from '../hooks/useAuth';
 
 const { Content } = Layout;
 
@@ -13,33 +14,9 @@ interface AuthenticatedLayoutProps {
   loading?: boolean;
 }
 
+
 export default function AuthenticatedLayout({ children, loading = false }: AuthenticatedLayoutProps) {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const router = useRouter();
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      setIsLoading(true);
-      try {
-        const accessToken = localStorage.getItem('access_token');
-        console.log("Access Token!!:", accessToken);
-        setIsAuthenticated(!!accessToken);
-      } catch {
-        setIsAuthenticated(false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    checkAuth();
-  }, []);
-
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      const currentPath = window.location.pathname;
-      router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
-    }
-  }, [isAuthenticated, isLoading, router]);
+  const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading || loading) {
     return (

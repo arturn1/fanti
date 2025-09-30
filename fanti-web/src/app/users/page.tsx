@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { Modal } from 'antd';
 import {
   Card,
   Table,
@@ -36,6 +37,8 @@ export default function UsersPage() {
   const [searchText, setSearchText] = useState('');
   const [selectedRole, setSelectedRole] = useState<UserRole | ''>('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   useEffect(() => {
     loadUsers();
@@ -58,33 +61,32 @@ export default function UsersPage() {
   // Filtrar usuários baseado nos critérios
   const filteredUsers = users.filter(user => {
     const matchesSearch = !searchText ||
-      user.name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      user.email?.toLowerCase().includes(searchText.toLowerCase()) ||
-      user.firstName?.toLowerCase().includes(searchText.toLowerCase()) ||
-      user.lastName?.toLowerCase().includes(searchText.toLowerCase());
+      (user.name && user.name.toLowerCase().includes(searchText.toLowerCase())) ||
+      (user.email && user.email.toLowerCase().includes(searchText.toLowerCase())) ||
+      (user.last_name && user.last_name.toLowerCase().includes(searchText.toLowerCase()));
 
-    const matchesRole = !selectedRole || user.role === selectedRole;
+    const matchesRole = !selectedRole || user.role === String(selectedRole);
     const matchesStatus = !selectedStatus ||
-      (selectedStatus === 'active' && user.isActive) ||
-      (selectedStatus === 'inactive' && !user.isActive);
+      (selectedStatus === 'active' && user.isActive === true) ||
+      (selectedStatus === 'inactive' && user.isActive === false);
 
     return matchesSearch && matchesRole && matchesStatus;
   });
 
   // Estatísticas
   const totalUsers = users.length;
-  const activeUsers = users.filter(u => u.isActive).length;
-  const roles = [...new Set(users.map(u => u.role).filter(Boolean))];
-  const adminUsers = users.filter(u => u.role === UserRole.Admin).length;
+  const activeUsers = users.filter(u => (u.isActive ?? true)).length;
+  const roles = [...new Set(users.map(u => u.role).filter((r): r is string => !!r))];
+  const adminUsers = users.filter(u => u.role === 'Admin').length;
 
   // Helper para obter nome da role
-  const getRoleName = (role: UserRole) => {
+  const getRoleName = (role: string) => {
     switch (role) {
-      case UserRole.Admin: return 'Administrador';
-      case UserRole.ProductOwner: return 'Product Owner';
-      case UserRole.ScrumMaster: return 'Scrum Master';
-      case UserRole.Developer: return 'Desenvolvedor';
-      case UserRole.Stakeholder: return 'Stakeholder';
+      case 'Admin': return 'Administrador';
+      case 'ProductOwner': return 'Product Owner';
+      case 'ScrumMaster': return 'Scrum Master';
+      case 'Developer': return 'Desenvolvedor';
+      case 'Stakeholder': return 'Stakeholder';
       default: return 'Não definido';
     }
   };
@@ -97,12 +99,12 @@ export default function UsersPage() {
         <Space>
           <Avatar
             size="small"
-            src={record.avatar && record.avatar.trim() !== '' ? record.avatar : undefined}
+            src={record.avatar && typeof record.avatar === 'string' && record.avatar.trim() !== '' ? record.avatar : undefined}
             icon={<UserOutlined />}
-            style={{ backgroundColor: record.isActive ? '#1890ff' : '#d9d9d9' }}
+            style={{ backgroundColor: record.isActive === true ? '#1890ff' : '#d9d9d9' }}
           />
           <div>
-            <Text strong>{record.name || `${record.firstName} ${record.lastName}`.trim()}</Text>
+            <Text strong>{record.name || (record.last_name || '').trim()}</Text>
             <br />
             <Text type="secondary" style={{ fontSize: '12px' }}>
               <MailOutlined style={{ marginRight: 4 }} />
@@ -112,8 +114,8 @@ export default function UsersPage() {
         </Space>
       ),
       sorter: (a, b) => {
-        const nameA = a.name || `${a.firstName} ${a.lastName}`.trim();
-        const nameB = b.name || `${b.firstName} ${b.lastName}`.trim();
+        const nameA = a.name || (a.last_name || '').trim();
+        const nameB = b.name || (b.last_name || '').trim();
         return nameA.localeCompare(nameB);
       },
     },
@@ -133,22 +135,22 @@ export default function UsersPage() {
         </Tag>
       ) : <Text type="secondary">Não definido</Text>,
       filters: roles.map(role => ({ text: getRoleName(role), value: role })),
-      onFilter: (value, record) => record.role === value,
+      onFilter: (value, record) => record.role === String(value),
     },
     {
       title: 'Status',
       dataIndex: 'isActive',
       key: 'isActive',
       render: (isActive) => (
-        <Tag color={isActive ? 'success' : 'default'}>
-          {isActive ? 'Ativo' : 'Inativo'}
+        <Tag color={(isActive ?? true) ? 'success' : 'default'}>
+          {(isActive ?? true) ? 'Ativo' : 'Inativo'}
         </Tag>
       ),
       filters: [
         { text: 'Ativo', value: true },
         { text: 'Inativo', value: false },
       ],
-      onFilter: (value, record) => record.isActive === value,
+      onFilter: (value, record) => (record.isActive ?? true) === value,
     },
     {
       title: 'ID',
@@ -165,6 +167,17 @@ export default function UsersPage() {
 
   return (
     <>
+      <Modal
+        open={modalVisible}
+        onCancel={() => setModalVisible(false)}
+        footer={null}
+        width={700}
+        title={selectedUser ? `Detalhes do usuário: ${selectedUser.name || selectedUser.email}` : 'Detalhes do usuário'}
+      >
+        <pre style={{ maxHeight: 500, overflow: 'auto', background: '#f6f6f6', padding: 16, borderRadius: 8 }}>
+          {selectedUser ? JSON.stringify(selectedUser, null, 2) : ''}
+        </pre>
+      </Modal>
       <Card>
         <Row gutter={[16, 16]} align="middle" style={{ marginBottom: 24 }}>
           <Col>
@@ -264,6 +277,12 @@ export default function UsersPage() {
           }}
           scroll={{ x: 800 }}
           size="middle"
+          onRow={record => ({
+            onClick: () => {
+              setSelectedUser(record);
+              setModalVisible(true);
+            }
+          })}
         />
 
         <div style={{ marginTop: 16, textAlign: 'center' }}>

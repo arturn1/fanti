@@ -20,7 +20,6 @@ export async function GET(req: NextRequest) {
 // POST: Create
 export async function POST(req: NextRequest) {
   try {
-    debugger
     const body = await req.json();
     const response = await api.post('/ProjectVersion', body);
     return NextResponse.json(response.data);

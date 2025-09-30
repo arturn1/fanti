@@ -208,20 +208,6 @@ export function getTaskTypeLabelFromTaskType(type: string): string {
     return 'Não Definido';
 }
 
-// Interfaces principais
-export interface User {
-    id: string;
-    email: string;
-    name: string;
-    firstName: string;
-    lastName: string;
-    avatar?: string;
-    role: UserRole;
-    isActive: boolean;
-    created: string;
-    updated?: string;
-}
-
 export interface Project {
     id: string;
     name: string;
@@ -397,4 +383,44 @@ export interface ModalData {
     editingPeriod: Period | null;
     viewingPeriod: Period | null;
     organizingPeriod: Period | null;
+}
+
+export interface User {
+    id?: string | null;
+    sub?: string;
+    email?: string | null;
+    name?: string | null;
+    role?: string;
+    avatar?: string;
+    InternalCategory?: string;
+    JobTitle?: string;
+    Manager?: string;
+    amr?: string[];
+    area?: string;
+    at_hash?: string;
+    aud?: string;
+    auth_time?: number;
+    exp?: number;
+    given_name?: string;
+    group?: string[];
+    groupsAreas?: string[];
+    iat?: number;
+    idp?: string;
+    iss?: string;
+    last_name?: string;
+    nbf?: number;
+    nonce?: string;
+    preferred_language?: string;
+    preferred_username?: string;
+    s_hash?: string;
+    sid?: string;
+    isActive?: boolean;
+    // Claims customizadas
+    ["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]?: string[];
+    ["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"]?: string;
+    ["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"]?: string;
+    ["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"]?: string;
+    ["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname"]?: string;
+    ["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn"]?: string;
+    claims?: Record<string, any>; // todos os campos extras do JWT
 }

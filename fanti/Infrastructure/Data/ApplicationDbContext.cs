@@ -75,6 +75,12 @@ namespace Infrastructure.Data
             .WithMany()
             .HasForeignKey(tp => tp.PredecessorTaskId)
             .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UsersEntity>()
+            .OwnsOne(u => u.Info, b =>
+            {
+                b.ToJson(); // tudo (inclusive Claims) vai para uma coluna JSON
+            });
         }
     }
 }
