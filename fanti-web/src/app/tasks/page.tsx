@@ -230,7 +230,7 @@ function TasksPageContent() {
       const startDate = task.startDate ? dayjs(task.startDate).toDate() : new Date();
       const endDate = task.endDate ? dayjs(task.endDate).toDate() : dayjs().add(1, 'day').toDate();
 
-      let progress = task.progress || 0;
+      const progress = task.progress || 0;
 
       const taskDependencies = (dependencies || [])
         .filter(dep => {
