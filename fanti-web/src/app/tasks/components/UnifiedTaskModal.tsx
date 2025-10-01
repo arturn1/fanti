@@ -310,7 +310,6 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
         message.error('Erro ao remover dependência');
       }
     } catch (error) {
-      console.error('Erro ao remover dependência:', error);
       message.error('Erro ao remover dependência');
     }
   };

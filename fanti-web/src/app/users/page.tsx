@@ -51,7 +51,6 @@ export default function UsersPage() {
       const data = await res.json();
       setUsers(data?.data || []);
     } catch (error) {
-      console.error('Erro ao carregar usuários:', error);
       message.error('Erro ao carregar usuários');
     } finally {
       setLoading(false);

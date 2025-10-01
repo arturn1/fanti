@@ -147,7 +147,6 @@ function TasksPageContent() {
       ]);
 
       setTasks(tasksData?.data || []);
-      console.log('Tasks:', tasksData);
       setProjects(projectsData?.data || []);
       setSprints(sprintsData?.data || []);
       setDependencies(dependenciesData?.data || []);
@@ -304,7 +303,6 @@ function TasksPageContent() {
       : sprints.filter(sprint => sprint.projectId === selectedProject);
 
     // Filtrar apenas milestones que não estão concluídas (status !== 4)
-    console.log('Filtering available sprints, total:', projectFilteredSprints);
     return projectFilteredSprints.filter(sprint => {
       // Converter status do backend para number se necessário
       return sprint.status != "3"; // SprintStatus.Completed = 3

@@ -47,13 +47,13 @@ export const useOrganization = (
                     await fetch(`/api/periodStaff/${ps.id}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ 
+                        body: JSON.stringify({
                             TotalHours: value
                         })
                     });
                     onDataChange?.(); // Notify parent component to refresh data
                 } catch (error) {
-                    console.error('Error updating total hours:', error);
+                    message.error('Error updating total hours:', error);
                 }
             }
         }
@@ -83,11 +83,11 @@ export const useOrganization = (
                 const createdTask = await response.json();
 
                 // Add task to local state with the real ID from backend
-                const newTask: TaskItem = { 
+                const newTask: TaskItem = {
                     id: createdTask.id,
-                    number: num, 
-                    hours: taskInput.hours, 
-                    projectId: taskInput.projectId 
+                    number: num,
+                    hours: taskInput.hours,
+                    projectId: taskInput.projectId
                 };
 
                 setOrgData(prev => {
@@ -105,7 +105,7 @@ export const useOrganization = (
 
                 setNewTaskInputs(prev => ({ ...prev, [staffId]: { number: '', hours: 0, projectId: undefined } }));
             } catch (error) {
-                console.error('Error creating task:', error);
+                message.error('Error creating task:', error);
             }
         }
     }, [newTaskInputs, orgData, periodStaffs]);
@@ -137,7 +137,7 @@ export const useOrganization = (
                 await fetch(`/api/tasksPeriod?id=${task.id}`, { method: 'DELETE' });
                 onDataChange?.(); // Notify parent component to refresh data
             } catch (error) {
-                console.error('Error deleting task:', error);
+                message.error('Error deleting task:', error);
             }
         }
     }, [orgData]);

@@ -122,7 +122,6 @@ export default function EditSprintModal({
             onSuccess();
             form.resetFields();
         } catch (error) {
-            console.error('Error ao atualizar sprint:', error);
             message.error('Erro ao atualizar sprint');
         } finally {
             setLoading(false);
@@ -173,7 +172,7 @@ export default function EditSprintModal({
                 >
                     <Input
                         placeholder="Ex: Sprint 1"
-                        onChange={(e) => console.log('Nome alterado:', e.target.value)}
+                        disabled
                     />
                 </Form.Item>
 

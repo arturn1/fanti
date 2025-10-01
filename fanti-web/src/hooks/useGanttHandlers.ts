@@ -372,7 +372,7 @@ export class GanttHandlers {
             })
           });
         } catch (error) {
-          console.warn(`Falha ao criar dependência para ${child.name}:`, error);
+          message.info(`Falha ao criar dependência para ${child.name}:`);
           // Continua com os outros filhos mesmo se uma dependência falhar
         }
       }

@@ -13,15 +13,18 @@ import {
   ToolOutlined,
   PicRightOutlined
 } from '@ant-design/icons';
-import { useAuth } from '@/hooks/useAuth';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { useAuthContext } from '@/hooks/useAuth';
 
 const { Header } = Layout;
 const { Text } = Typography;
 
 export default function AppHeader() {
-  const { user, logout } = useAuth();
+
+
+  const { user, logout } = useAuthContext();
+
   const router = useRouter();
   const pathname = usePathname();
 
@@ -30,7 +33,6 @@ export default function AppHeader() {
       await logout();
       message.success('Logout realizado com sucesso!');
     } catch (error) {
-      console.error('Erro no logout:', error);
       message.error('Erro ao fazer logout');
     }
   };
@@ -161,7 +163,7 @@ export default function AppHeader() {
                 style={{ backgroundColor: '#1890ff' }}
               />
               <span style={{ color: '#262626' }}>
-                {user?.name || 'Usuário'}
+                {user?.given_name + ' ' + user?.last_name || 'Usuário'}
               </span>
             </Space>
           </Button>

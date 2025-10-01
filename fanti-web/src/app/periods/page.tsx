@@ -131,7 +131,6 @@ export default function PeriodsPage() {
             });
             setPeriods(periodsWithStaffs);
         } catch (error) {
-            console.error('Error fetching periods:', error);
             message.error('Erro ao carregar períodos');
         } finally {
             setLoading(false);
@@ -262,7 +261,6 @@ export default function PeriodsPage() {
                 message.success('Período criado!');
 
                 // Add the new period directly to the state
-                console.log('New period created:', newPeriod);
                 setPeriods(prev => [...prev, newPeriod.data || newPeriod]);
             }
             modalsHook.closeModal('createEdit');

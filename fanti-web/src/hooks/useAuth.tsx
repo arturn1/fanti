@@ -1,10 +1,10 @@
 'use client';
 
 
-import React, { useEffect, useCallback, ReactNode } from "react";
-import { useRouter } from "next/navigation";
-import { SessionProvider, useSession, signIn, signOut } from "next-auth/react";
+import React, { useEffect, useCallback, ReactNode, useContext } from "react";
 import { User } from "@/types";
+import { signIn } from "next-auth/react";
+import { Spin } from "antd";
 
 interface AuthContextType {
   user: User | null;
@@ -14,22 +14,19 @@ interface AuthContextType {
   login: (provider?: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => void;
+  // ...existing code...
 }
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  return <SessionProvider>{children}</SessionProvider>;
-}
+const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
-export function useAuth(): AuthContextType {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  // ...existing code...
 
-  const { data: session, status, update } = useSession();
+  // Estado local para usuário e status
   const [manualUser, setManualUser] = React.useState<User | null>(null);
   const [userSaved, setUserSaved] = React.useState(false);
-
-  // Decodifica id_token manualmente se presente na URL e salva todo o payload
-  useEffect(() => {
-    login();
-  }, []);
+  const [status, setStatus] = React.useState<'loading' | 'authenticated' | 'unauthenticated'>('loading');
+  const [update, setUpdate] = React.useState(0);
 
   // Adapta o mapeamento do usuário para claims customizadas e múltiplos formatos
   function mapUser(raw: any): User {
@@ -132,7 +129,6 @@ export function useAuth(): AuthContextType {
       claims,
     };
   }
-
   // Função para mapear User para o formato do backend (CreateUsersCommand)
   function mapUserToCommand(user: User) {
     // Helper para garantir GUID válido ou undefined
@@ -185,7 +181,6 @@ export function useAuth(): AuthContextType {
       }
     };
   }
-
   // Função para salvar/atualizar usuário no backend
   async function saveUserToBackend(user: User) {
     if (!user || !user.email || !user.id) return;
@@ -211,14 +206,16 @@ export function useAuth(): AuthContextType {
       console.error("Erro ao salvar usuário no backend:", e);
     }
   }
-
-  const user: User | null = session?.user
-    ? mapUser(session.user)
-    : mapUser(manualUser);
-
+  // Usuário só do estado local
+  const user = mapUser(manualUser);
   // Considera autenticado se houver dados válidos de usuário
-  const isAuthenticated = !!(user && (user.id || user.email || user.name));
-  const isLoading = status === "loading" && !manualUser;
+  const isAuthenticated = Boolean(user && (user.id || user.email || user.name));
+  const isLoading = status === 'loading' && !manualUser;
+
+  useEffect(() => {
+    console.log("Tentando login...");
+    login();
+  }, []);
 
   // Salva usuário no backend na primeira vez e a cada novo login
   useEffect(() => {
@@ -232,6 +229,7 @@ export function useAuth(): AuthContextType {
   const login = useCallback(async (provider?: string) => {
     const stored = localStorage.getItem('manual_user');
     if (window.location.hash.includes('id_token')) {
+      console.log("Detectado id_token na URL, processando login...");
       // Decodifica e seta manualUser a partir do id_token
       const hash = window.location.hash;
       const match = hash.match(/id_token=([^&]+)/);
@@ -254,6 +252,7 @@ export function useAuth(): AuthContextType {
           // Salva usuário manual no backend
           saveUserToBackend(mapped);
           localStorage.setItem('manual_user', JSON.stringify(mapped));
+          setStatus('authenticated');
           // Limpa o hash da URL para evitar loops, removendo tudo após id_token
           if (window.location.hash) {
             const url = window.location.href.replace(/(#id_token=[^&]*).*$/, '');
@@ -261,80 +260,68 @@ export function useAuth(): AuthContextType {
           }
         } catch (e) {
           console.error('Erro ao decodificar id_token:', e);
+          setStatus('unauthenticated');
         }
       }
     } else if (!stored && manualUser == null) {
-      console.log('[useAuth] Iniciando login com provider:', provider);
-      // Se não há usuário manual e nada no localStorage, inicia login
-      await signIn(provider || "is4", { redirect: false });
+      console.log("Iniciando signIn com provider:", provider || 'is4');
+      await signIn(provider || 'is4', { redirect: false });
+      setStatus('unauthenticated');
     } else if (stored && !manualUser) {
+      console.log("Carregando usuário do localStorage...");
       // Se há no localStorage mas não no estado, carrega
       try {
-        console.log('[useAuth] Carregando manual_user do localStorage:', stored);
         setManualUser(JSON.parse(stored));
-        // Salva usuário do localStorage no backend
         saveUserToBackend(JSON.parse(stored));
-      } catch { }
+        setStatus('authenticated');
+      } catch {
+        setStatus('unauthenticated');
+      }
+    } else if (manualUser) {
+      console.log("Usuário já está no estado local.");
+      setStatus('authenticated');
     }
-
-  }, []);
+  }, [manualUser]);
 
   const logout = useCallback(async () => {
     if (typeof window !== "undefined") {
       localStorage.removeItem('manual_user');
-      // Limpa manual_user ao fazer logout
-      if (window.location.hash) {
-        history.replaceState(null, '', window.location.pathname + window.location.search);
-      }
-      // Busca o endpoint de logout do well-known
-      try {
-        debugger;
-        const issuer = process.env.OAUTH2_ISSUER || `https://connect-staging.fi-group.com/identity`;
-        if (issuer) {
-          const res = await fetch(`${issuer}/.well-known/openid-configuration`);
-          const config = await res.json();
-          const endSessionUrl = config.end_session_endpoint;
-          if (endSessionUrl) {
-            window.location.href = `${endSessionUrl}?post_logout_redirect_uri=${encodeURIComponent(window.location.origin)}`;
-            return;
-          }
-        }
-      } catch (e) {
-        // fallback: recarrega a página
-        window.location.reload();
-        return;
-      }
-      // fallback: recarrega a página
+      setManualUser(null);
+      setStatus('unauthenticated');
       window.location.reload();
     }
   }, []);
 
   const refreshUser = useCallback(() => {
-    update && update();
-  }, [update]);
+    setUpdate(u => u + 1);
+  }, []);
 
-  return {
-    user,
-    isAuthenticated,
-    isLoading,
-    status,
-    login,
-    logout,
-    refreshUser,
-  };
-}
-
-// Hook para verificar se o usuário tem uma role específica
-export function useHasRole(requiredRole: string | string[]) {
-  const { user } = useAuth();
-  if (!user || !user.role) return false;
-  if (Array.isArray(requiredRole)) {
-    return requiredRole.includes(user.role);
+  if (isLoading || status === 'loading' || !isAuthenticated) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: 'white' }}><Spin size="large" /></div>
+    )
   }
-  return user.role === requiredRole;
+
+  return (
+    <AuthContext.Provider value={{
+      user,
+      isAuthenticated,
+      isLoading,
+      status,
+      login,
+      logout,
+      refreshUser
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
+
 }
 
-// Hook para verificar se o usuário é admin
-export function useIsAdmin() {
-  return useHasRole('Administrador');
-}
+export const useAuthContext = () => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) {
+    throw new Error("useAuthContext must be used within an AuthProvider");
+  }
+  return ctx;
+};
