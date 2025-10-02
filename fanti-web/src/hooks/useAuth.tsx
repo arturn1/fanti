@@ -3,8 +3,9 @@
 
 import React, { useEffect, useCallback, ReactNode, useContext } from "react";
 import { User } from "@/types";
-import { signIn } from "next-auth/react";
+import { signIn, signOut } from "next-auth/react";
 import { Spin } from "antd";
+import { ca } from "date-fns/locale";
 
 interface AuthContextType {
   user: User | null;
@@ -196,6 +197,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     try {
       const payload = mapUserToCommand(user);
+      console.log("Salvando usuário no backend:", payload);
       await fetch("/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -288,8 +290,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.removeItem('manual_user');
       setManualUser(null);
       setStatus('unauthenticated');
-      window.location.reload();
+      try {
+        const issuer = 'https://connect-staging.fi-group.com/identity';
+        if (issuer) {
+          const res = await fetch(`${issuer}/.well-known/openid-configuration`);
+          const data = await res.json();
+          const logoutUrl = data.end_session_endpoint;
+          if (logoutUrl) {
+            const clientId = process.env.NEXT_PUBLIC_AUTH_CLIENT_ID;
+            const redirectUri = window.location.origin;
+            const url = `${logoutUrl}?post_logout_redirect_uri=${encodeURIComponent(redirectUri)}`;
+            window.location.href = url;
+            return;
+          }
+        }
+        window.location.reload();
+      } catch (e) {
+        window.location.reload();
+        return
+      }
     }
+    await signOut({ callbackUrl: window.location.origin });
   }, []);
 
   const refreshUser = useCallback(() => {

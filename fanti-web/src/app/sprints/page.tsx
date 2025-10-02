@@ -34,19 +34,20 @@ import EditSprintModal from '@/app/sprints/components/EditSprintModal';
 import ProductCard from '@/app/sprints/components/ProductCard';
 import { calculateProductData, parseSprintStatus, ProductData as ProductDataType } from '@/utils/productCalculations';
 import dayjs from 'dayjs';
-import { useRouter } from 'next/navigation';
+import { useProjects } from '@/hooks/useProjects';
+
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
 export default function SprintsPage() {
-    const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(false);
     const [createModalVisible, setCreateModalVisible] = useState(false);
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [selectedSprint, setSelectedSprint] = useState<Sprint | null>(null);
     const [productsData, setProductsData] = useState<ProductDataType[]>([]);
-    const router = useRouter();
+    const { projects } = useProjects();
+
 
     // Filtros
     const [searchText, setSearchText] = useState('');
@@ -59,8 +60,15 @@ export default function SprintsPage() {
     const [milestoneStatusFilter, setMilestoneStatusFilter] = useState<string>('all');
 
     useEffect(() => {
-        loadData();
-    }, []);
+        if (projects.length > 0) {
+            loadData();
+        }
+        // Se quiser limpar productsData quando não houver projetos:
+        else {
+            setProductsData([]);
+        }
+    }, [projects]);
+
 
     // Effect para atualizar selectedProduct quando productsData mudar
     useEffect(() => {
@@ -73,21 +81,19 @@ export default function SprintsPage() {
     }, [productsData, selectedProduct?.project.id]);
 
     const loadData = async () => {
+        console.log('Loading data...', projects);
         try {
             setLoading(true);
-            const [projectsRes, sprintsRes, tasksRes] = await Promise.all([
-                fetch('/api/projects'),
+            const [sprintsRes, tasksRes] = await Promise.all([
                 fetch('/api/sprints'),
                 fetch('/api/tasks'),
             ]);
-            const [projectsData, sprintsData, tasksData] = await Promise.all([
-                projectsRes.json(),
+            const [sprintsData, tasksData] = await Promise.all([
                 sprintsRes.json(),
                 tasksRes.json(),
             ]);
-            setProjects(projectsData?.data || []);
             const calculatedProductsData = calculateProductData(
-                projectsData?.data || [],
+                projects || [],
                 sprintsData?.data || [],
                 tasksData?.data || []
             );

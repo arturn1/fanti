@@ -29,15 +29,14 @@ import {
 import type { ColumnsType, TableProps } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
-import api from '@/services/api';
+import { useProjects } from '@/hooks/useProjects';
 
 
 const { Option } = Select;
 const { Title, Text } = Typography;
 
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { projects, loading } = useProjects();
   // Estados de filtros
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | 'all'>('all');
@@ -47,22 +46,7 @@ export default function ProjectsPage() {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
-  const loadProjects = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch('/api/projects');
-      const data = await res.json();
-      setProjects(data?.data || []);
-    } catch (error) {
-      message.error('Erro ao carregar produtos');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadProjects();
-  }, []);
+  // O hook useProjects já faz o carregamento automático conforme o modo
 
   const handleDelete = async (id: string) => {
     try {
@@ -71,7 +55,9 @@ export default function ProjectsPage() {
       });
       if (res.ok) {
         message.success('Produto excluído com sucesso!');
-        loadProjects();
+        // O useProjects recarrega automaticamente ao mudar o modo/dados,
+        // mas aqui forçamos recarregar via window.location.reload() para garantir atualização em ambos modos
+        window.location.reload();
       } else {
         message.error('Erro ao excluir produto');
       }
@@ -294,7 +280,7 @@ export default function ProjectsPage() {
         visible={createModalVisible}
         onClose={() => setCreateModalVisible(false)}
         onSuccess={() => {
-          loadProjects();
+          window.location.reload();
           setCreateModalVisible(false);
         }}
       />
@@ -307,7 +293,7 @@ export default function ProjectsPage() {
           setSelectedProject(null);
         }}
         onSuccess={() => {
-          loadProjects();
+          window.location.reload();
           setEditModalVisible(false);
           setSelectedProject(null);
         }}

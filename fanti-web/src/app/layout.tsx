@@ -5,6 +5,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { App, Layout, Spin } from "antd";
 import AppHeader from "@/components/AppHeader";
 import React from "react";
+import { DataSourceProvider } from "@/hooks/useDataSource";
 
 
 export const metadata: Metadata = {
@@ -24,13 +25,15 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body>
-        <AntdProvider >
-          <AuthProvider>
-            <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', color: '#333', backgroundColor: 'white'  }}>
-              <AppHeader />
-              {children}
-            </div>
-          </AuthProvider>
+        <AntdProvider>
+          <DataSourceProvider>
+            <AuthProvider>
+              <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', color: '#333', backgroundColor: 'white' }}>
+                <AppHeader />
+                {children}
+              </div>
+            </AuthProvider>
+          </DataSourceProvider>
         </AntdProvider>
       </body>
     </html>

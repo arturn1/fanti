@@ -5,7 +5,7 @@ import https from 'https';
 const isDev = process.env.NODE_ENV === 'development';
 
 const api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://localhost:7213/api',
+    baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8081/api',
     headers: {
         'Content-Type': 'application/json',
     },

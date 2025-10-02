@@ -63,7 +63,7 @@ export default function AppHeader() {
       icon: <SettingOutlined />,
       label: 'Configurações',
       onClick: () => {
-        message.info('Configurações em desenvolvimento');
+        router.push('/settings');
       },
     },
     {
