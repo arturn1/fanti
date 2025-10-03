@@ -1,5 +1,4 @@
 
-
 import api from '@/services/api';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -9,6 +8,7 @@ export async function GET(req: NextRequest) {
         const { searchParams } = new URL(req.url);
         const id = searchParams.get('id');
         const versions = searchParams.get('versions');
+
         if (id) {
             const response = await api.get(`/Projects/${id}`);
             return NextResponse.json(response.data);

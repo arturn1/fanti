@@ -11,6 +11,7 @@ namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public class TeamController : BaseController
     {
         private readonly ITeamRepository _TeamRepository;
@@ -31,7 +32,7 @@ namespace API.Controllers
         public async Task<IActionResult> GetByIdAsync(Guid id)
         {
             var models = await _TeamRepository.GetByIdAsync(id);
-            if (models == null) return NotFound(_defaultDictionary.Response["NotFound"]); 
+            if (models == null) return NotFound(_defaultDictionary.Response["NotFound"]);
 
             return Ok(new CommandResult(models, HttpStatusCode.OK));
         }
@@ -51,13 +52,13 @@ namespace API.Controllers
 
             return Ok(handle);
         }
-        
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteByIdAsync(Guid id)
         {
             var entity = await _TeamRepository.GetByIdAsync(id);
-            if (entity == null) return NotFound(_defaultDictionary.Response["NotFound"]); 
-                
+            if (entity == null) return NotFound(_defaultDictionary.Response["NotFound"]);
+
             _TeamRepository.DeleteObject(entity);
 
             var result = new { data = "Removed success!!!" };

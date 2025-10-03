@@ -7,6 +7,7 @@ namespace API.Controllers
 {
     [Route("api")]
     [ApiController]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public class HomeController : BaseController
     {
         private readonly DateTime _startupTime;
@@ -25,8 +26,8 @@ namespace API.Controllers
             };
 
             return ApiResponse(
-                responseData, 
-                _defaultDictionary.Response["Success"], 
+                responseData,
+                _defaultDictionary.Response["Success"],
                 HttpStatusCode.OK
                 );
         }

@@ -11,6 +11,7 @@ namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public class TaskDependenciesController : BaseController
     {
         private readonly ITaskDependenciesRepository _TaskDependenciesRepository;

@@ -15,6 +15,7 @@ interface AuthContextType {
   login: (provider?: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => void;
+  accessToken?: string | null;
   // ...existing code...
 }
 
@@ -224,8 +225,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (isAuthenticated && user && !userSaved) {
       saveUserToBackend(user);
     }
-    // Sempre que mudar o id/email, tenta salvar de novo
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user?.id, user?.email]);
 
   const login = useCallback(async (provider?: string) => {
@@ -236,6 +235,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const hash = window.location.hash;
       const match = hash.match(/id_token=([^&]+)/);
       if (match) {
+        // Também extrai access_token do hash
+        const accessMatch = hash.match(/access_token=([^&]+)/);
+        const accessToken = accessMatch ? accessMatch[1] : null;
+        console.log("Decodificando id_token...", match);
         try {
           const idToken = match[1];
           const base64Url = idToken.split('.')[1];
@@ -254,6 +257,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           // Salva usuário manual no backend
           saveUserToBackend(mapped);
           localStorage.setItem('manual_user', JSON.stringify(mapped));
+          if (idToken) localStorage.setItem('id_token', idToken);
+          if (accessToken) localStorage.setItem('access_token', accessToken);
           setStatus('authenticated');
           // Limpa o hash da URL para evitar loops, removendo tudo após id_token
           if (window.location.hash) {
@@ -323,6 +328,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     )
   }
 
+  // Recupera access_token do localStorage
+  const accessToken = (typeof window !== 'undefined') ? localStorage.getItem('access_token') : null;
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -331,7 +339,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       status,
       login,
       logout,
-      refreshUser
+      refreshUser,
+      accessToken
     }}>
       {children}
     </AuthContext.Provider>

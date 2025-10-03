@@ -1,8 +1,8 @@
+'use client';
 import { use, useEffect, useState } from 'react';
 import { useDataSource } from './useDataSource';
-import { set } from 'date-fns';
 
-export function useProjects() {
+export function useProjects(token?: string) {
     const { mode, excelData, ready } = useDataSource();
     const [projects, setProjects] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
@@ -13,14 +13,12 @@ export function useProjects() {
         if (mode === 'excel') {
             if (!ready) return;
             setProjects(excelData?.projects || []);
-            console.log('useProjects - excelData:', excelData?.projects);
-            console.log('useProjects - projects:', projects);
             setLoading(false);
             setError(null);
             return;
         }
         setLoading(true);
-        fetch('api/projects')
+        apiFetch('api/projects')
             .then(res => res.json())
             .then(data => {
                 setProjects(data?.data || []);
@@ -35,3 +33,26 @@ export function useProjects() {
 
     return { projects, loading, error, setProjects, setLoading };
 }
+
+export async function apiFetch(url: string, options: RequestInit = {}) {
+    const token = typeof window === "undefined"
+        ? undefined
+        : localStorage.getItem("access_token");
+
+    const headers = {
+        ...(options.headers || {}),
+        Authorization: token ? `Bearer ${token}` : "",
+        "Content-Type": "application/json",
+    };
+
+    const response = await fetch(url, { ...options, headers });
+
+    // Middleware de erro global
+    if (response.status === 401) {
+        console.warn("Sessão expirada — redirecionando para login");
+        if (typeof window !== "undefined") window.location.href = "/login";
+    }
+
+    return response;
+}
+

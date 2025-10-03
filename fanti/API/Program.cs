@@ -19,6 +19,7 @@ builder.Services.AddSwaggerGen();
 
 string connectionString = Environment.GetEnvironmentVariable("APP_DATABASE_URL", EnvironmentVariableTarget.Machine) ?? builder.Configuration.GetConnectionString("DefaultConnectionMssql");
 builder.Services.AddDatabaseConfiguration(connectionString);
+builder.Services.AddJwtBearerAuthentication(builder.Configuration);
 
 #region Builder
 #endregion
@@ -42,6 +43,7 @@ app.UseMiddleware<ResponseCleaningMiddleware>();
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

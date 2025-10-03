@@ -36,7 +36,8 @@ const { Option } = Select;
 const { Title, Text } = Typography;
 
 export default function ProjectsPage() {
-  const { projects, loading } = useProjects();
+  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') || '' : '';
+  const { projects, loading } = useProjects(token);
   // Estados de filtros
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | 'all'>('all');

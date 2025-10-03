@@ -4,15 +4,15 @@ const IS4Provider = {
     id: "is4",
     name: "IdentityServer4",
     type: "oauth",
-    wellKnown: `${process.env.OAUTH2_ISSUER}/.well-known/openid-configuration`,
-    clientId: process.env.OAUTH2_CLIENTID || 'leidobemV2.stg',
-    clientSecret: "mGu84W9Cl",
+    wellKnown: `https://connect-staging.fi-group.com/identity/.well-known/openid-configuration`,
+    clientId: 'leidobemV2.stg',
+    // clientSecret: "WWpKNGFGcFlWbnBpTTFaMldqSTVjbVJSUFQwPQ==",
     issuer: "https://connect-staging.fi-group.com/identity",
     authorization: {
         params: {
-            scope: process.env.OAUTH2_SCOPE || "openid profile email",
-            response_type: process.env.OAUTH2_RESPONSE_TYPE || "id_token token",
-            redirect_uri: process.env.NEXTAUTH_URL || "http://localhost:3000",
+            scope: "openid profile email",
+            response_type: "id_token token",
+            redirect_uri: "http://localhost:3000",
             state: Math.random().toString(36).substring(2) + Date.now().toString(36),
             nonce: Math.random().toString(36).substring(2) + Date.now().toString(36)
         }

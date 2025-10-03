@@ -12,6 +12,7 @@ namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public class AuthController : BaseController
     {
         private readonly IConfiguration _configuration;
@@ -29,7 +30,7 @@ namespace API.Controllers
             {
                 var token = GenerateJwtToken(request.Email);
                 var user = GetUserByEmail(request.Email);
-                
+
                 return Ok(new CommandResult(new LoginResponse
                 {
                     AccessToken = token,
@@ -49,7 +50,7 @@ namespace API.Controllers
             if (!string.IsNullOrEmpty(request.RefreshToken))
             {
                 var token = GenerateJwtToken("admin@fanti.com");
-                
+
                 return Ok(new CommandResult(new LoginResponse
                 {
                     AccessToken = token,
@@ -86,7 +87,7 @@ namespace API.Controllers
             // Simulação de dados do usuário - em produção viria do OIDC provider
             var users = new Dictionary<string, object>
             {
-                { "admin@fanti.com", new { 
+                { "admin@fanti.com", new {
                     Id = Guid.NewGuid().ToString(),
                     Email = "admin@fanti.com",
                     Name = "Administrador",
@@ -96,7 +97,7 @@ namespace API.Controllers
                     Role = "1", // Admin
                     IsActive = true
                 }},
-                { "dev@fanti.com", new { 
+                { "dev@fanti.com", new {
                     Id = Guid.NewGuid().ToString(),
                     Email = "dev@fanti.com",
                     Name = "Desenvolvedor",
@@ -106,7 +107,7 @@ namespace API.Controllers
                     Role = "4", // Developer
                     IsActive = true
                 }},
-                { "manager@fanti.com", new { 
+                { "manager@fanti.com", new {
                     Id = Guid.NewGuid().ToString(),
                     Email = "manager@fanti.com",
                     Name = "Gerente",
