@@ -1,8 +1,12 @@
 using API.Configurations;
 using API.Middleware;
 using Infrastructure.Configuration;
+using OfficeOpenXml;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configurar licença do EPPlus para uso não comercial
+ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
 builder.Services.AddIoc();
 builder.Services.AddControllers();
@@ -39,7 +43,7 @@ app.UseCors(builder =>
            .AllowAnyHeader());
 
 app.UseMiddleware<ErrorHandlingMiddleware>();
-app.UseMiddleware<ResponseCleaningMiddleware>();
+// app.UseMiddleware<ResponseCleaningMiddleware>();
 
 app.UseHttpsRedirection();
 

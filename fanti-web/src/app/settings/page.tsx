@@ -1,15 +1,14 @@
 'use client';
 import { SettingOutlined } from '@ant-design/icons';
-import { Button, Card, Typography } from 'antd';
+import { Button, Card, Typography, Input, message, Upload, Radio, Divider } from 'antd';
 import { exportAllDataToExcel, importAllDataFromExcel } from '@/services/exportExcel';
-import { message, Upload } from 'antd';
-
-
+import { useState } from 'react';
 import { useDataSource } from '@/hooks/useDataSource';
-import { Radio } from 'antd';
 
 export default function SettingsPage() {
     const { mode, setMode, importExcel, loading, excelData } = useDataSource();
+    const [jsonInput, setJsonInput] = useState('');
+    const [jsonLoading, setJsonLoading] = useState(false);
 
     // Função de exportação usando dados do contexto
     const handleExport = async () => {
@@ -42,6 +41,57 @@ export default function SettingsPage() {
         } catch (err) {
             message.error('Erro ao importar dados.');
             console.error(err);
+        }
+    };
+
+    // Função para converter JSON para Excel
+    const handleJsonToExcel = async () => {
+        if (!jsonInput.trim()) {
+            message.error('Por favor, insira um JSON válido.');
+            return;
+        }
+
+        try {
+            setJsonLoading(true);
+
+            // Validar se é um JSON válido
+            JSON.parse(jsonInput);
+
+            // Fazer requisição para a API
+            const response = await fetch('/api/excel/json-para-excel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: jsonInput,
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro na conversão');
+            }
+
+            // Fazer download do arquivo
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `dados-json-${new Date().toISOString().slice(0, 10)}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            message.success('Excel gerado com sucesso!');
+            setJsonInput(''); // Limpar o campo após sucesso
+        } catch (error) {
+            if (error instanceof SyntaxError) {
+                message.error('JSON inválido. Verifique a sintaxe.');
+            } else {
+                message.error('Erro ao converter JSON para Excel.');
+            }
+            console.error(error);
+        } finally {
+            setJsonLoading(false);
         }
     };
 
@@ -81,6 +131,30 @@ export default function SettingsPage() {
                     <Radio.Button value="excel">Excel (Local)</Radio.Button>
                 </Radio.Group>
             </div>
+
+            <Divider />
+
+            <Typography.Title level={4}>Conversor JSON para Excel</Typography.Title>
+            <Typography.Paragraph>
+                Insira um JSON válido para converter diretamente em arquivo Excel com coluna personalizada.
+            </Typography.Paragraph>
+
+            <Input.TextArea
+                value={jsonInput}
+                onChange={(e) => setJsonInput(e.target.value)}
+                placeholder='Exemplo: [{"Nome": "João", "Idade": 30}, {"Nome": "Maria", "Idade": 25}]'
+                rows={6}
+                style={{ marginBottom: 16 }}
+            />
+
+            <Button
+                type="primary"
+                onClick={handleJsonToExcel}
+                loading={jsonLoading}
+                disabled={!jsonInput.trim()}
+            >
+                Converter JSON para Excel
+            </Button>
         </Card>
     );
 }
