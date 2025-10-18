@@ -11,7 +11,6 @@ namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Microsoft.AspNetCore.Authorization.Authorize]
     public class StaffController : BaseController
     {
         private readonly IStaffRepository _StaffRepository;

@@ -1,9 +1,14 @@
-import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // Temporariamente desabilitado para resolver o loop
-  // Deixando apenas passar tudo
+
+  const referer = request.headers.get('authority');
+
+  if (referer && referer !== process.env.NEXT_PUBLIC_ALLOWED_ORIGIN) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   return NextResponse.next();
 }
 
@@ -16,6 +21,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };

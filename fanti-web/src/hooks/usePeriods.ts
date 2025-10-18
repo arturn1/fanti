@@ -3,42 +3,41 @@ import api from '@/services/api';
 import { useEffect, useState } from 'react';
 import { useDataSource } from './useDataSource';
 
-export function useProjects(token?: string) {
+export function usePeriods(token?: string) {
   const { mode, excelData, ready } = useDataSource();
-  const [projects, setProjects] = useState<any[]>([]);
+  const [periods, setPeriods] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     if (mode === 'excel') {
       if (!ready) return;
-      setProjects(excelData?.projects || []);
+      setPeriods(excelData?.periods || []);
       setLoading(false);
       setError(null);
       return;
     }
     setLoading(true);
-    api.get('/projects')
+    api.get('/Period')
       .then(data => {
-        setProjects(data.data.data || []);
+        setPeriods(data.data.data || []);
         setError(null);
       })
       .catch(err => {
         setError(err);
-        setProjects([]);
+        setPeriods([]);
       })
       .finally(() => setLoading(false));
   }, [mode, excelData, ready]);
+
   // CRUD methods
-  async function createProject(project: any) {
+  async function createPeriod(period: any) {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.post('/projects',
-        JSON.stringify(project)
-      );
+      const res = await api.post('/Period', JSON.stringify(period));
       const data = await res.data;
-      setProjects((prev) => [...prev, data.data]);
+      setPeriods((prev) => [...prev, data.data]);
       return data;
     } catch (err: any) {
       setError(err);
@@ -47,13 +46,14 @@ export function useProjects(token?: string) {
       setLoading(false);
     }
   }
-  async function updateProject(id: string, updates: any) {
+
+  async function updatePeriod(id: string, updates: any) {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.put(`/projects`, JSON.stringify(updates));
+      const res = await api.put(`/Period`, JSON.stringify(updates));
       const data = await res.data;
-      setProjects((prev) => prev.map(p => p.id === id ? data.data : p));
+      setPeriods((prev) => prev.map(p => p.id === id ? data.data : p));
       return data;
     } catch (err: any) {
       setError(err);
@@ -62,12 +62,13 @@ export function useProjects(token?: string) {
       setLoading(false);
     }
   }
-  async function deleteProject(id: string) {
+
+  async function deletePeriod(id: string) {
     setLoading(true);
     setError(null);
     try {
-      await api.delete(`/projects/${id}`);
-      setProjects((prev) => prev.filter(p => p.id !== id));
+      await api.delete(`/Period/${id}`);
+      setPeriods((prev) => prev.filter(p => p.id !== id));
       return true;
     } catch (err: any) {
       setError(err);
@@ -76,11 +77,12 @@ export function useProjects(token?: string) {
       setLoading(false);
     }
   }
-  async function getProject(id: string) {
+
+  async function getPeriod(id: string) {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get(`/projects/${id}`);
+      const res = await api.get(`/Period/${id}`);
       return res.data.data;
     } catch (err: any) {
       setError(err);
@@ -91,19 +93,14 @@ export function useProjects(token?: string) {
   }
 
   return {
-    projects,
+    periods,
     loading,
     error,
-    setProjects,
+    setPeriods,
     setLoading,
-    createProject,
-    updateProject,
-    deleteProject,
-    getProject
-  }
+    createPeriod,
+    updatePeriod,
+    deletePeriod,
+    getPeriod
+  };
 }
-
-
-
-
-

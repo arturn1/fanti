@@ -1,5 +1,6 @@
 'use client';
 
+import { useProjects } from '@/hooks/useProjects';
 import { Project, ProjectStatus, UpdateProjectCommand } from '@/types';
 import { EditOutlined } from '@ant-design/icons';
 import {
@@ -21,12 +22,14 @@ interface EditProjectModalProps {
     visible: boolean;
     project: Project | null;
     onClose: () => void;
-    onSuccess: () => void;
+  onSuccess: () => void;
+  updateProject: (id: string, updates: any) => Promise<any>; // Adicionado prop updateProject
 }
 
-export default function EditProjectModal({ visible, project, onClose, onSuccess }: EditProjectModalProps) {
+export default function EditProjectModal({ visible, project, onClose, onSuccess, updateProject }: EditProjectModalProps) {
     const [form] = Form.useForm();
-    const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  
 
     // Função para converter status do backend para enum
     const parseProjectStatus = (status: ProjectStatus | string): ProjectStatus => {
@@ -71,13 +74,7 @@ export default function EditProjectModal({ visible, project, onClose, onSuccess 
                 status: values.status,
             };
 
-            await fetch(`api/projects`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(updateData),
-            });
+          await updateProject(project.id, updateData);
 
             message.success('Produto atualizado com sucesso!');
             form.resetFields();

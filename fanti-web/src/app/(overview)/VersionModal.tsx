@@ -1,7 +1,7 @@
-import { ProjectVersionDto } from '@/components/ProjectsDashboard';
 import { Button, DatePicker, Form, Input, List, Modal, Popconfirm, message } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
+import { ProjectVersionDto } from './ProjectsDashboard';
 
 interface VersionModalProps {
   open: boolean;

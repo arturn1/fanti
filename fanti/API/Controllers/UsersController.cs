@@ -11,7 +11,6 @@ namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Microsoft.AspNetCore.Authorization.Authorize]
     public class UsersController : BaseController
     {
         private readonly IUsersRepository _UsersRepository;

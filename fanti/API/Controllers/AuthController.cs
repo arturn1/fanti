@@ -12,7 +12,6 @@ namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Microsoft.AspNetCore.Authorization.Authorize]
     public class AuthController : BaseController
     {
         private readonly IConfiguration _configuration;

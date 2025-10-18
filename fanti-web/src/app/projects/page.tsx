@@ -2,6 +2,7 @@
 
 import CreateProjectModal from '@/app/projects/components/CreateProjectModal';
 import EditProjectModal from '@/app/projects/components/EditProjectModal';
+import { useProjects } from '@/hooks/useProjects';
 import { Project, ProjectStatus } from '@/types';
 import {
   DeleteOutlined,
@@ -28,16 +29,15 @@ import {
 } from 'antd';
 import type { ColumnsType, TableProps } from 'antd/es/table';
 import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
-import { useProjects } from '@/hooks/useProjects';
+import { useState } from 'react';
 
 
 const { Option } = Select;
-const { Title, Text } = Typography;
+const {  Text } = Typography;
 
 export default function ProjectsPage() {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') || '' : '';
-  const { projects, loading } = useProjects(token);
+
+  const { projects, loading, deleteProject, updateProject, createProject } = useProjects();
   // Estados de filtros
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | 'all'>('all');
@@ -51,17 +51,8 @@ export default function ProjectsPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      const res = await fetch(`api/projects?id=${id}`, {
-        method: 'DELETE'
-      });
-      if (res.ok) {
-        message.success('Produto excluído com sucesso!');
-        // O useProjects recarrega automaticamente ao mudar o modo/dados,
-        // mas aqui forçamos recarregar via window.location.reload() para garantir atualização em ambos modos
-        window.location.reload();
-      } else {
-        message.error('Erro ao excluir produto');
-      }
+      await deleteProject(id);
+      message.success('Produto excluído com sucesso!');
     } catch (error) {
       message.error('Erro ao excluir produto');
     }
@@ -281,9 +272,9 @@ export default function ProjectsPage() {
         visible={createModalVisible}
         onClose={() => setCreateModalVisible(false)}
         onSuccess={() => {
-          window.location.reload();
           setCreateModalVisible(false);
         }}
+        createProject={createProject}
       />
 
       <EditProjectModal
@@ -292,13 +283,12 @@ export default function ProjectsPage() {
         onClose={() => {
           setEditModalVisible(false);
           setSelectedProject(null);
-        }}
+        } }
         onSuccess={() => {
-          window.location.reload();
           setEditModalVisible(false);
           setSelectedProject(null);
         }}
-      />
+          updateProject={updateProject}      />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { useProjects } from '@/hooks/useProjects';
 import { CreateProjectCommand } from '@/types';
 import { PlusOutlined } from '@ant-design/icons';
 import {
@@ -10,8 +11,6 @@ import {
     message,
     Modal
 } from 'antd';
-import { tr } from 'date-fns/locale';
-import dayjs from 'dayjs';
 import { useState } from 'react';
 
 const { RangePicker } = DatePicker;
@@ -20,12 +19,13 @@ const { TextArea } = Input;
 interface CreateProjectModalProps {
     visible: boolean;
     onClose: () => void;
-    onSuccess: () => void;
+  onSuccess: () => void;
+  createProject: (project: any) => Promise<any>; // Adicionado prop createProject
 }
 
-export default function CreateProjectModal({ visible, onClose, onSuccess }: CreateProjectModalProps) {
+export default function CreateProjectModal({ visible, onClose, onSuccess, createProject }: CreateProjectModalProps) {
     const [form] = Form.useForm();
-    const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (values: any) => {
         try {
@@ -41,13 +41,7 @@ export default function CreateProjectModal({ visible, onClose, onSuccess }: Crea
                 status: 0, // String conforme esperado pelo comando
             };
 
-            await fetch(`api/projects`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(projectData),
-            });
+            await createProject(projectData);
 
             message.success('Produto criado com sucesso!');
             form.resetFields();

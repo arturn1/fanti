@@ -3,6 +3,7 @@ using API.Middleware;
 using Infrastructure.Configuration;
 using OfficeOpenXml;
 
+#region Builder
 var builder = WebApplication.CreateBuilder(args);
 
 // Configurar licença do EPPlus para uso não comercial
@@ -25,16 +26,18 @@ string connectionString = Environment.GetEnvironmentVariable("APP_DATABASE_URL",
 builder.Services.AddDatabaseConfiguration(connectionString);
 builder.Services.AddJwtBearerAuthentication(builder.Configuration);
 
-#region Builder
+// builder.Services.AddControllers(options => { options.Filters.Add(new Microsoft.AspNetCore.Mvc.Authorization.AuthorizeFilter()); });
+
 #endregion
 
 var app = builder.Build();
+#region Apps
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsProduction())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+  app.UseSwagger();
+  app.UseSwaggerUI();
 }
 
 app.UseCors(builder =>
@@ -52,7 +55,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-#region Apps
 #endregion
 
 app.Run();

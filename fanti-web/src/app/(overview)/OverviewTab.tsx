@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import MilestonesDashboard from './MilestonesDashboard';
 import PeriodsBySprintDashboard from './PeriodsBySprintDashboard';
 import ProjectsDashboard from './ProjectsDashboard';
+import api from '@/services/api';
 
 export default function OverviewTab() {
   const [loading, setLoading] = useState(false);
@@ -20,7 +21,7 @@ export default function OverviewTab() {
       setLoading(true);
       try {
         const [projectsRes, sprintsRes, tasksRes, tasksPeriodRes, periodStaffsRes, staffsRes, periodsRes] = await Promise.all([
-          fetch('/api/projects?versions=true'),
+          api.get('/projects/with-versions'),
           fetch('/api/sprints'),
           fetch('/api/tasks'),
           fetch('/api/tasksPeriod'),
@@ -29,7 +30,7 @@ export default function OverviewTab() {
           fetch('/api/periods'),
         ]);
         const [projectsJson, sprintsJson, tasksJson, tasksPeriodJson, periodStaffsJson, staffsJson, periodsJson] = await Promise.all([
-          projectsRes.json(),
+          projectsRes.data,
           sprintsRes.json(),
           tasksRes.json(),
           tasksPeriodRes.json(),

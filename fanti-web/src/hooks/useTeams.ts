@@ -3,42 +3,41 @@ import api from '@/services/api';
 import { useEffect, useState } from 'react';
 import { useDataSource } from './useDataSource';
 
-export function useProjects(token?: string) {
+export function useTeams(token?: string) {
   const { mode, excelData, ready } = useDataSource();
-  const [projects, setProjects] = useState<any[]>([]);
+  const [teams, setTeams] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (mode === 'excel') {
-      if (!ready) return;
-      setProjects(excelData?.projects || []);
-      setLoading(false);
-      setError(null);
-      return;
-    }
+    // if (mode === 'excel') {
+    //   if (!ready) return;
+    //   setTeams(excelData?.teams || []);
+    //   setLoading(false);
+    //   setError(null);
+    //   return;
+    // }
     setLoading(true);
-    api.get('/projects')
+    api.get('/Team')
       .then(data => {
-        setProjects(data.data.data || []);
+        setTeams(data.data.data || []);
         setError(null);
       })
       .catch(err => {
         setError(err);
-        setProjects([]);
+        setTeams([]);
       })
       .finally(() => setLoading(false));
   }, [mode, excelData, ready]);
+
   // CRUD methods
-  async function createProject(project: any) {
+  async function createTeam(team: any) {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.post('/projects',
-        JSON.stringify(project)
-      );
+      const res = await api.post('/Team', JSON.stringify(team));
       const data = await res.data;
-      setProjects((prev) => [...prev, data.data]);
+      setTeams((prev) => [...prev, data.data]);
       return data;
     } catch (err: any) {
       setError(err);
@@ -47,13 +46,14 @@ export function useProjects(token?: string) {
       setLoading(false);
     }
   }
-  async function updateProject(id: string, updates: any) {
+
+  async function updateTeam(id: string, updates: any) {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.put(`/projects`, JSON.stringify(updates));
+      const res = await api.put(`/Team/${id}`, JSON.stringify(updates));
       const data = await res.data;
-      setProjects((prev) => prev.map(p => p.id === id ? data.data : p));
+      setTeams((prev) => prev.map(t => t.id === id ? data.data : t));
       return data;
     } catch (err: any) {
       setError(err);
@@ -62,12 +62,13 @@ export function useProjects(token?: string) {
       setLoading(false);
     }
   }
-  async function deleteProject(id: string) {
+
+  async function deleteTeam(id: string) {
     setLoading(true);
     setError(null);
     try {
-      await api.delete(`/projects/${id}`);
-      setProjects((prev) => prev.filter(p => p.id !== id));
+      await api.delete(`/Team/${id}`);
+      setTeams((prev) => prev.filter(t => t.id !== id));
       return true;
     } catch (err: any) {
       setError(err);
@@ -76,11 +77,12 @@ export function useProjects(token?: string) {
       setLoading(false);
     }
   }
-  async function getProject(id: string) {
+
+  async function getTeam(id: string) {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get(`/projects/${id}`);
+      const res = await api.get(`/Team/${id}`);
       return res.data.data;
     } catch (err: any) {
       setError(err);
@@ -91,19 +93,14 @@ export function useProjects(token?: string) {
   }
 
   return {
-    projects,
+    teams,
     loading,
     error,
-    setProjects,
+    setTeams,
     setLoading,
-    createProject,
-    updateProject,
-    deleteProject,
-    getProject
-  }
+    createTeam,
+    updateTeam,
+    deleteTeam,
+    getTeam
+  };
 }
-
-
-
-
-

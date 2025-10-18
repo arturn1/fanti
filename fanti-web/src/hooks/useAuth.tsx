@@ -1,11 +1,10 @@
 'use client';
 
 
-import React, { useEffect, useCallback, ReactNode, useContext } from "react";
 import { User } from "@/types";
-import { signIn, signOut } from "next-auth/react";
 import { Spin } from "antd";
-import { ca } from "date-fns/locale";
+import { signIn, signOut } from "next-auth/react";
+import React, { ReactNode, useCallback, useContext, useEffect } from "react";
 
 interface AuthContextType {
   user: User | null;

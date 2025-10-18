@@ -3,6 +3,7 @@ import { Card, Col, Row, Tag, Typography } from 'antd';
 import { useState } from 'react';
 import AddVersionButton from './AddVersionButton';
 import VersionModal from './VersionModal';
+import api from '@/services/api';
 
 const { Title, Text } = Typography;
 
@@ -122,8 +123,8 @@ export default function ProjectsDashboard({ projects }: ProjectsDashboardProps) 
                         body: JSON.stringify({ projectId: modalProjectId, version, deployDate: date })
                     });
                     // Atualiza lista local
-                    const res = await fetch('/api/projects?versions=true');
-                    const data = await res.json();
+                    const res = await api.get('/projects?versions=true');
+                    const data = await res.data;
                     setLocalProjects(data.data || []);
                 }}
                 onEdit={async (id, version) => {

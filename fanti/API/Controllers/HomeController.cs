@@ -7,7 +7,6 @@ namespace API.Controllers
 {
     [Route("api")]
     [ApiController]
-    [Microsoft.AspNetCore.Authorization.Authorize]
     public class HomeController : BaseController
     {
         private readonly DateTime _startupTime;

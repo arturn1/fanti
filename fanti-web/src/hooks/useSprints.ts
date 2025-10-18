@@ -3,42 +3,41 @@ import api from '@/services/api';
 import { useEffect, useState } from 'react';
 import { useDataSource } from './useDataSource';
 
-export function useProjects(token?: string) {
+export function useSprints(token?: string) {
   const { mode, excelData, ready } = useDataSource();
-  const [projects, setProjects] = useState<any[]>([]);
+  const [sprints, setSprints] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     if (mode === 'excel') {
       if (!ready) return;
-      setProjects(excelData?.projects || []);
+      setSprints(excelData?.sprints || []);
       setLoading(false);
       setError(null);
       return;
     }
     setLoading(true);
-    api.get('/projects')
+    api.get('/Sprints')
       .then(data => {
-        setProjects(data.data.data || []);
+        setSprints(data.data.data || []);
         setError(null);
       })
       .catch(err => {
         setError(err);
-        setProjects([]);
+        setSprints([]);
       })
       .finally(() => setLoading(false));
   }, [mode, excelData, ready]);
+
   // CRUD methods
-  async function createProject(project: any) {
+  async function createSprint(sprint: any) {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.post('/projects',
-        JSON.stringify(project)
-      );
+      const res = await api.post('/Sprints', JSON.stringify(sprint));
       const data = await res.data;
-      setProjects((prev) => [...prev, data.data]);
+      setSprints((prev) => [...prev, data.data]);
       return data;
     } catch (err: any) {
       setError(err);
@@ -47,13 +46,14 @@ export function useProjects(token?: string) {
       setLoading(false);
     }
   }
-  async function updateProject(id: string, updates: any) {
+
+  async function updateSprint(id: string, updates: any) {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.put(`/projects`, JSON.stringify(updates));
+      const res = await api.put(`/Sprints/${id}`, JSON.stringify(updates));
       const data = await res.data;
-      setProjects((prev) => prev.map(p => p.id === id ? data.data : p));
+      setSprints((prev) => prev.map(s => s.id === id ? data.data : s));
       return data;
     } catch (err: any) {
       setError(err);
@@ -62,12 +62,13 @@ export function useProjects(token?: string) {
       setLoading(false);
     }
   }
-  async function deleteProject(id: string) {
+
+  async function deleteSprint(id: string) {
     setLoading(true);
     setError(null);
     try {
-      await api.delete(`/projects/${id}`);
-      setProjects((prev) => prev.filter(p => p.id !== id));
+      await api.delete(`/Sprints/${id}`);
+      setSprints((prev) => prev.filter(s => s.id !== id));
       return true;
     } catch (err: any) {
       setError(err);
@@ -76,11 +77,12 @@ export function useProjects(token?: string) {
       setLoading(false);
     }
   }
-  async function getProject(id: string) {
+
+  async function getSprint(id: string) {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get(`/projects/${id}`);
+      const res = await api.get(`/Sprints/${id}`);
       return res.data.data;
     } catch (err: any) {
       setError(err);
@@ -91,19 +93,14 @@ export function useProjects(token?: string) {
   }
 
   return {
-    projects,
+    sprints,
     loading,
     error,
-    setProjects,
+    setSprints,
     setLoading,
-    createProject,
-    updateProject,
-    deleteProject,
-    getProject
-  }
+    createSprint,
+    updateSprint,
+    deleteSprint,
+    getSprint
+  };
 }
-
-
-
-
-
