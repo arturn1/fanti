@@ -17,17 +17,6 @@ import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
 const { RangePicker } = DatePicker;
 
-// Fetch teams for the Team select field
-const useTeams = () => {
-  const [teams, setTeams] = useState<Team[]>([]);
-  useEffect(() => {
-    fetch('/api/teams')
-      .then(res => res.json())
-      .then(data => setTeams(data?.data || []));
-  }, []);
-  return teams;
-};
-
 const { Option } = Select;
 const { TextArea } = Input;
 
@@ -36,17 +25,22 @@ interface CreateSubtaskModalProps {
   visible: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  teams: Team[];
+  createSubTask: (data: CreateTaskCommand) => Promise<Task>;
+  updateTask?: (taskId: string, data: any) => Promise<Task>;
 }
 
 export const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
   parentTask,
   visible,
   onClose,
-  onSuccess
+  onSuccess,
+  teams,
+  createSubTask,
+  updateTask
 }) => {
   const { message } = App.useApp();
   const [form] = Form.useForm();
-  const teams = useTeams();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -77,11 +71,7 @@ export const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
         Progress: 0,
         TeamId: values.teamId,
       };
-      await fetch(`/api/tasks`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(taskData)
-      });
+      await createSubTask(taskData);
       message.success('Subtarefa criada com sucesso!');
       form.resetFields();
       onSuccess();
@@ -200,7 +190,7 @@ export const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
             rules={[]}
           >
             <Select placeholder="Selecione a equipe">
-              {teams.map((team) => (
+              {teams!.map((team) => (
                 <Option key={team.id} value={team.id}>{team.name}</Option>
               ))}
             </Select>

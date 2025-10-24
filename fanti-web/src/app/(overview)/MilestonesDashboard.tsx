@@ -1,11 +1,11 @@
 
-import { Period, PeriodStaff, SprintStatus, Staff, Task, TasksPeriod, TaskType } from '@/types';
+import { Period, PeriodStaff, SprintStatus, Staff, Task, TasksPeriod } from '@/types';
 import { isRangeOverlap } from '@/utils/dateRange';
 import { calculateProductData, parseSprintStatus, ProductData } from '@/utils/productCalculations';
-import { Card, Carousel, Col, Divider, Empty, Progress, Row, Select, Tag, Tooltip, Typography, Modal, Table } from 'antd';
+import { Card, Carousel, Col, Divider, Empty, Modal, Row, Select, Table, Tag, Tooltip, Typography } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useMemo, useState } from 'react';
-import type { ColumnsType } from 'antd/es/table';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -40,31 +40,27 @@ export default function MilestonesDashboard({ projects, sprints, tasks, tasksPer
     [SprintStatus.Completed]: { color: 'success', label: 'Concluído' },
   };
 
-  interface MilestonesDashboardProps {
-    projects: any[];
-    sprints: any[];
-    tasks: Task[];
-    tasksPeriod: TasksPeriod[];
-    periodStaffs: PeriodStaff[];
-    staffs: Staff[];
-    periods: Period[];
-  }
-
   const productsData: ProductData[] = useMemo(() => calculateProductData(projects, sprints, tasks), [projects, sprints, tasks]);
+  console.log('Products Data:', productsData);
+
   const filteredProducts = useMemo(() => {
     let filtered = productsData;
     if (statusFilter === 'notCompleted') {
       filtered = productsData.map(product => ({
         ...product,
-        sprints: product.sprints.filter(s => parseSprintStatus(s.status) !== SprintStatus.Completed)
+        sprints: product.sprints.filter(s => parseSprintStatus(s.status) !== 3)
       }));
+      console.log('Filtered Products (Not Completed):', filtered);
     } else if (statusFilter !== 'all') {
       filtered = productsData.map(product => ({
         ...product,
         sprints: product.sprints.filter(s => parseSprintStatus(s.status) === statusFilter)
       }));
+      console.log('Filtered Products by Status:', filtered);
     }
+    console.log('Filtered Products (Final):', filtered);
     return filtered.filter(product => product.sprints && product.sprints.length > 0);
+
   }, [productsData, statusFilter]);
 
   return (

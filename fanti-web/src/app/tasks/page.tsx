@@ -1,10 +1,7 @@
 'use client';
 
 import {
-  CalendarOutlined,
-  LinkOutlined,
-  PlusOutlined,
-  UserOutlined
+  CalendarOutlined
 } from '@ant-design/icons';
 import {
   Gantt,
@@ -15,20 +12,18 @@ import {
 import '@wamra/gantt-task-react/dist/style.css';
 import {
   App,
-  Button,
   Card,
   Col,
-  message,
   Row,
   Select,
   Space,
   Spin
 } from 'antd';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { CreateSubtaskModal } from '@/app/tasks/components/CreateSubtaskModal';
 import { UnifiedTaskModal } from '@/app/tasks/components/UnifiedTaskModal';
-import { Project, Sprint, Task, TaskDependency, TaskStatus, Team, toGanttTaskType } from '@/types';
+import { Task, toGanttTaskType } from '@/types';
 import { getColorVariations, getTaskColorByStatus } from '@/utils/taskColors';
 import dayjs from 'dayjs';
 
@@ -43,19 +38,29 @@ import {
 } from '@/config/ganttConfig';
 
 // Handlers do Gantt
+import { usePeriods, usePeriodStaff, useProjects, useSprints, useStaff, useTaskDependencies, useTasks, useTasksPeriod, useTeams } from '@/hooks';
 import { createGanttHandlers } from '@/hooks/useGanttHandlers';
 
 const { Option } = Select;
 
 function TasksPageContent() {
   const { modal } = App.useApp();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [sprints, setSprints] = useState<Sprint[]>([]);
-  const [dependencies, setDependencies] = useState<TaskDependency[]>([]);
-  const [teams, setTeams] = useState<Team[]>([]);
+
+  const { tasks, createTask, setTasks, updateTask, deleteTask, patchTask, createSubTask } = useTasks();
+  const { sprints, updateSprint, deleteSprint, loading: loadingSprints } = useSprints();
+  const { teams, loading: loadingTeams } = useTeams();
+  const { projects } = useProjects();
+  const { taskDependencies, getDependenciesByTask, taskDependencies: dependencies,
+    setTaskDependencies: setDependencies, createTaskDependency, deleteTaskDependency } = useTaskDependencies();
+  const [loading, setLoading] = useState(false);
+  const { periods } = usePeriods();
+  const { periodStaffs } = usePeriodStaff();
+  const { staffs } = useStaff();
+  const { tasksPeriod } = useTasksPeriod();
+
+  let anyLoading = loadingSprints || loadingTeams || loading;
+
   const [selectedTeam, setSelectedTeam] = useState<string>('all');
-  const [loading, setLoading] = useState(true);
 
   const [selectedTaskForUnified, setSelectedTaskForUnified] = useState<Task | null>(null);
   const [showUnifiedModal, setShowUnifiedModal] = useState(false);
@@ -66,43 +71,7 @@ function TasksPageContent() {
   const [selectedProject, setSelectedProject] = useState<string>('all');
   const [selectedSprint, setSelectedSprint] = useState<string>('all');
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Week);
-  const [forceUpdate, setForceUpdate] = useState<number>(0);
 
-  // Refs para otimização e controle de estado
-  const debounceTimersRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
-  const pendingUpdatesRef = useRef<Map<string, any>>(new Map());
-
-  // Função de debounce para otimizar atualizações - UMA POR TASK ID
-  const debounceUpdate = useCallback((taskId: string, updateData: any, updateFn: () => Promise<void>) => {
-
-    // Armazenar a atualização pendente para esta task específica
-    pendingUpdatesRef.current.set(taskId, updateData);
-
-    // Limpar timer anterior DESTA TASK se existir
-    const existingTimer = debounceTimersRef.current.get(taskId);
-    if (existingTimer) {
-      clearTimeout(existingTimer);
-    }
-
-    // Definir novo timer ESPECÍFICO para esta task
-    const newTimer = setTimeout(async () => {
-      try {
-        await updateFn();
-        pendingUpdatesRef.current.delete(taskId);
-        debounceTimersRef.current.delete(taskId);
-      } catch (error) {
-        pendingUpdatesRef.current.delete(taskId);
-        debounceTimersRef.current.delete(taskId);
-      }
-    }, 300); // 300ms de debounce
-
-    debounceTimersRef.current.set(taskId, newTimer);
-  }, []);
-
-  useEffect(() => {
-    loadData();
-    fetch('/api/teams').then(res => res.json()).then(data => setTeams(data?.data || [])).catch(() => setTeams([]));
-  }, []);
 
   // Resetar selectedSprint se estiver em uma milestone concluída
   useEffect(() => {
@@ -117,52 +86,17 @@ function TasksPageContent() {
     }
   }, [sprints, selectedSprint]);
 
-  // Limpeza dos timers quando o componente for desmontado
-  useEffect(() => {
-    return () => {
-      // Limpar todos os timers de debounce
-      debounceTimersRef.current.forEach((timer) => {
-        clearTimeout(timer);
-      });
-      debounceTimersRef.current.clear();
-      pendingUpdatesRef.current.clear();
-    };
-  }, []);
-
   const loadData = async () => {
     try {
       setLoading(true);
-      const [tasksRes, projectsRes, sprintsRes, dependenciesRes] = await Promise.all([
-        fetch('/api/tasks'),
-        fetch('/api/projects'),
-        fetch('/api/sprints'),
-        fetch('/api/taskDependencies'),
-      ]);
-
-      const [tasksData, projectsData, sprintsData, dependenciesData] = await Promise.all([
-        tasksRes.json(),
-        projectsRes.json(),
-        sprintsRes.json(),
-        dependenciesRes.json(),
-      ]);
-
-      setTasks(tasksData?.data || []);
-      setProjects(projectsData?.data || []);
-      setSprints(sprintsData?.data || []);
-      setDependencies(dependenciesData?.data || []);
-    } catch (error) {
-      message.error('Erro ao carregar dados');
-      setTasks([]);
-      setProjects([]);
-      setSprints([]);
-      setDependencies([]);
     } finally {
       setLoading(false);
     }
   };
 
   const ganttTasks = useMemo(() => {
-    if (!tasks.length || loading) {
+    console.log('Recalculating ganttTasks...');
+    if (!tasks.length || anyLoading) {
       return [];
     }
 
@@ -288,14 +222,8 @@ function TasksPageContent() {
         }
       } as GanttTask;
     });
-  }, [tasks, projects, sprints, dependencies, selectedProject, selectedSprint, selectedTeam, loading, forceUpdate]);
+  }, [tasks, projects, sprints, dependencies, selectedProject, selectedSprint, selectedTeam, anyLoading]);
 
-  const handleOpenManagement = (tab: 'edit' | 'team' | 'dependencies') => {
-    if (selectedTaskForUnified) {
-      setUnifiedModalTab(tab);
-      setShowUnifiedModal(true);
-    }
-  };
 
   const availableSprints = useMemo(() => {
     const projectFilteredSprints = selectedProject === 'all'
@@ -317,12 +245,18 @@ function TasksPageContent() {
     setDependencies,
     loadData,
     tasks,
-    debounceUpdate,
     setSelectedTaskForSubtask,
     setShowSubtaskModal,
     setSelectedTaskForUnified,
     setShowUnifiedModal,
-    setUnifiedModalTab
+    setUnifiedModalTab,
+    updateSprint,
+    deleteSprint,
+    updateTask,
+    patchTask,
+    deleteTask,
+    createTaskDependency,
+    deleteTaskDependency
   });
 
   return (
@@ -390,7 +324,7 @@ function TasksPageContent() {
       </Card>
 
       <Card>
-        {loading ? (
+        {anyLoading ? (
           <div style={{ textAlign: 'center', padding: '100px 0' }}>
             <Spin size="large" />
             <p style={{ marginTop: 16 }}>Carregando tarefas...</p>
@@ -455,6 +389,15 @@ function TasksPageContent() {
           setShowUnifiedModal(false);
           setSelectedTaskForUnified(null);
         }}
+        createTask={createTask}
+        updateTask={updateTask}
+        periods={periods}
+        periodStaffs={periodStaffs}
+        staffs={staffs}
+        tasksPeriod={tasksPeriod}
+        teams={teams}
+        taskDependencies={taskDependencies}
+        getDependenciesByTask={getDependenciesByTask}
       />
 
       <CreateSubtaskModal
@@ -469,6 +412,9 @@ function TasksPageContent() {
           setShowSubtaskModal(false);
           setSelectedTaskForSubtask(null);
         }}
+        teams={teams}
+        createSubTask={createSubTask}
+        updateTask={updateTask}
       />
     </div>
   );

@@ -84,7 +84,7 @@ export const calculateProductData = (
     if (projectTasks.length > 0) {
       // Se há apenas 1 tarefa de projeto, usar seu progresso direto
       if (projectTasks.length === 1) {
-        productData.progress = projectTasks[0].progress || 0;
+        productData.progress = sprintTasks[0].progress || 0;
       } else {
         // Se há múltiplas tarefas, calcular média
         const totalProgress = projectTasks.reduce((sum, task) => sum + (task.progress || 0), 0);

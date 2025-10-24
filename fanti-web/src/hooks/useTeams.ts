@@ -1,10 +1,10 @@
 'use client';
 import api from '@/services/api';
 import { useEffect, useState } from 'react';
-import { useDataSource } from './useDataSource';
+// import { useDataSource } from './useDataSource';
 
 export function useTeams(token?: string) {
-  const { mode, excelData, ready } = useDataSource();
+  // const { mode, excelData, ready } = useDataSource();
   const [teams, setTeams] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -28,7 +28,7 @@ export function useTeams(token?: string) {
         setTeams([]);
       })
       .finally(() => setLoading(false));
-  }, [mode, excelData, ready]);
+  }, []);
 
   // CRUD methods
   async function createTeam(team: any) {
@@ -51,7 +51,7 @@ export function useTeams(token?: string) {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.put(`/Team/${id}`, JSON.stringify(updates));
+      const res = await api.put(`/Team`, JSON.stringify({ ...updates, id }));
       const data = await res.data;
       setTeams((prev) => prev.map(t => t.id === id ? data.data : t));
       return data;

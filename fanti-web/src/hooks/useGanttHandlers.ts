@@ -2,7 +2,7 @@
  * Handlers dos eventos da biblioteca Gantt
  * Funções para lidar com movimentação, dependências e outros eventos do Gantt
  */
-import { Task, TaskDependency, TaskType } from '@/types';
+import { Task, TaskDependency } from '@/types';
 import { message } from 'antd';
 import dayjs from 'dayjs';
 
@@ -15,12 +15,20 @@ export interface GanttHandlersConfig {
   setDependencies: (deps: TaskDependency[]) => void;
   loadData: () => Promise<void>;
   tasks: Task[];
-  debounceUpdate: (taskId: string, updateData: any, updateFn: () => Promise<void>) => void;
   setSelectedTaskForSubtask: (task: Task | null) => void;
   setShowSubtaskModal: (show: boolean) => void;
   setSelectedTaskForUnified: (task: Task | null) => void;
   setShowUnifiedModal: (show: boolean) => void;
   setUnifiedModalTab: (tab: string) => void;
+
+  // Hook methods - required for full hooks integration
+  updateSprint: (id: string, data: any) => Promise<any>;
+  deleteSprint: (id: string) => Promise<any>;
+  updateTask: (id: string, updates: any) => Promise<any>;
+  deleteTask: (id: string) => Promise<any>;
+  createTaskDependency: (dependency: any) => Promise<any>;
+  deleteTaskDependency: (predecessorTaskId: string, successorTaskId: string) => Promise<any>;
+  patchTask: (id: string, updates: any) => Promise<any>;
 }
 
 /**
@@ -49,18 +57,13 @@ export class GanttHandlers {
   private syncSprintDates = async (task: Task, startDate: string, endDate: string) => {
     if (task.type == 'project' && task.sprintId) {
       try {
-        await fetch(`/api/sprints`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: task.sprintId,
-            startDate,
-            endDate,
-            status: task.status?.toString() || 1
-          })
+        await this.config.updateSprint(task.sprintId, {
+          id: task.sprintId,
+          startDate,
+          endDate,
+          status: task.status?.toString() || 1
         });
 
-        // Atualizar o estado local da tarefa para refletir as novas datas
         message.success(`Datas da milestone do projeto "${task.title}" foram atualizadas.`);
       } catch (error) {
         console.error('Erro ao sincronizar datas da milestone:', error);
@@ -75,9 +78,7 @@ export class GanttHandlers {
   private deleteAssociatedSprint = async (task: Task) => {
     if (task.type == 'project' && task.sprintId) {
       try {
-        await fetch(`api/sprints?id=${task.sprintId}`, {
-          method: 'DELETE'
-        });
+        await this.config.deleteSprint(task.sprintId);
         message.success(`Sprint associada ao projeto "${task.title}" foi excluída.`);
       } catch (error) {
         console.error('Erro ao excluir sprint:', error);
@@ -159,22 +160,9 @@ export class GanttHandlers {
         }
 
 
-        await fetch(`/api/tasks/${parentTask?.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            StartDate: newStartDate,
-            EndDate: newEndDate,
-          })
-        });
-
-        await fetch(`/api/tasks/${parentTask.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            StartDate: newStartDate,
-            EndDate: newEndDate,
-          })
+        await this.config.patchTask(parentTask.id, {
+          StartDate: newStartDate,
+          EndDate: newEndDate,
         });
 
         // Atualizar o estado local da tarefa pai
@@ -231,21 +219,11 @@ export class GanttHandlers {
       });
 
       // Usar debounce para a atualização do backend
-      this.config.debounceUpdate(
-        task.id,
-        { startDate, endDate, progress: task.progress || 0 },
-        async () => {
 
-          await fetch(`/api/tasks/${task?.id}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              StartDate: startDate,
-              EndDate: endDate,
-            })
-          });
-        }
-      );
+      await this.config.patchTask(task.id, {
+        StartDate: startDate,
+        EndDate: endDate,
+      });
 
       // Lidar com dependências e tarefas pai (sem debounce para manter sincronização)
       const additionalUpdates: Promise<any>[] = [];
@@ -309,24 +287,8 @@ export class GanttHandlers {
       });
 
       // Usar debounce para a atualização do backend
-      this.config.debounceUpdate(
-        `${task.id}_progress`,
-        { progress: roundedProgress },
-        async () => {
 
-          const res = await fetch(`/api/tasks/${task?.id}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              Progress: roundedProgress,
-            })
-          });
-
-          if (res.ok) {
-            this.config.loadData();
-          }
-        }
-      );
+      await this.config.patchTask(task.id, { Progress: roundedProgress });
 
       // Processar tarefas filhas (sem debounce para manter sincronização)
       if (children && children.length > 0) {
@@ -363,13 +325,9 @@ export class GanttHandlers {
       // Lógica: pai precede todos os filhos (pai → filho)
       for (const child of childs) {
         try {
-          await fetch(`/api/taskDependencies`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              predecessorTaskId: parent.id,
-              successorTaskId: child.id
-            })
+          await this.config.createTaskDependency({
+            predecessorTaskId: parent.id,
+            successorTaskId: child.id
           });
         } catch (error) {
           message.info(`Falha ao criar dependência para ${child.name}:`);
@@ -378,15 +336,6 @@ export class GanttHandlers {
       }
 
       message.success(`${childs.length} tarefa(s) movida(s) para dentro de "${parent.name}" com dependências criadas!`);
-
-      // Recarregar dados para atualizar Gantt
-      const [updatedTasks, updatedDependencies] = await Promise.all([
-        fetch(`/api/tasks`).then(res => res.json()).then(data => data.data as Task[]),
-        fetch(`/api/taskDependencies`).then(res => res.json()).then(data => data.data as TaskDependency[])
-      ]);
-
-      this.config.setTasks(updatedTasks);
-      this.config.setDependencies(updatedDependencies);
 
     } catch (error) {
       message.error('Erro ao criar dependências. Tente novamente.');
@@ -400,25 +349,12 @@ export class GanttHandlers {
     try {
       // Criar dependência: task (anterior) → taskForMove (posterior)
       // A tarefa que será movida para depois depende da tarefa alvo
-      await fetch(`/api/taskDependencies`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          predecessorTaskId: task.id,
-          successorTaskId: taskForMove.id
-        })
+      await this.config.createTaskDependency({
+        predecessorTaskId: task.id,
+        successorTaskId: taskForMove.id
       });
-      //
+
       message.success(`"${taskForMove.name}" movida DEPOIS de "${task.name}" e dependência criada!`);
-
-      // Recarregar dados para atualizar Gantt
-      const [updatedTasks, updatedDependencies] = await Promise.all([
-        fetch(`/api/tasks`).then(res => res.json()).then(data => data.data as Task[]),
-        fetch(`/api/taskDependencies`).then(res => res.json()).then(data => data.data as TaskDependency[])
-      ]);
-
-      this.config.setTasks(updatedTasks);
-      this.config.setDependencies(updatedDependencies);
 
     } catch (error) {
       message.error('Erro ao criar dependência entre tarefas.');
@@ -440,25 +376,12 @@ export class GanttHandlers {
     try {
       // Criar dependência: taskForMove (anterior) → task (posterior)
       // A tarefa que será movida para antes precede a tarefa alvo
-      await fetch(`/api/taskDependencies`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          predecessorTaskId: taskForMove.id,
-          successorTaskId: task.id
-        })
+      await this.config.createTaskDependency({
+        predecessorTaskId: taskForMove.id,
+        successorTaskId: task.id
       });
-      //
+
       message.success(`"${taskForMove.name}" movida ANTES de "${task.name}" e dependência criada!`);
-
-      // Recarregar dados para atualizar Gantt
-      const [updatedTasks, updatedDependencies] = await Promise.all([
-        fetch(`/api/tasks`).then(res => res.json()).then(data => data.data as Task[]),
-        fetch(`/api/taskDependencies`).then(res => res.json()).then(data => data.data as TaskDependency[])
-      ]);
-
-      this.config.setTasks(updatedTasks);
-      this.config.setDependencies(updatedDependencies);
 
     } catch (error) {
       message.error('Erro ao criar dependência entre tarefas.');
@@ -483,22 +406,8 @@ export class GanttHandlers {
         cancelText: 'Cancelar',
         onOk: async () => {
           try {
-            // Usar o novo método para remover dependência diretamente pelas tarefas
-            await fetch(`/api/taskDependencies?predecessorTaskId=${taskFrom.id}&successorTaskId=${taskTo.id}`, {
-              method: 'DELETE'
-            });
-            //
+            await this.config.deleteTaskDependency(taskFrom.id, taskTo.id);
             message.success('Dependência removida com sucesso!');
-
-            // Recarregar apenas os dados necessários sem recarregar a página inteira
-            const [updatedTasks, updatedDependencies] = await Promise.all([
-              fetch(`/api/tasks`).then(res => res.json()).then(data => data.data as Task[]),
-              fetch(`/api/taskDependencies`).then(res => res.json()).then(data => data.data as TaskDependency[])
-            ]);
-
-            this.config.setTasks(updatedTasks);
-            this.config.setDependencies(updatedDependencies);
-
           } catch (error) {
             message.error('Erro ao remover dependência.');
           }
@@ -549,9 +458,7 @@ export class GanttHandlers {
               if (realTask?.type == 'project' && realTask?.sprintId) {
                 await this.deleteAssociatedSprint(realTask);
               }
-              await fetch(`/api/tasks?id=${task.id}`, {
-                method: 'DELETE'
-              });
+              await this.config.deleteTask(task.id);
             }
             this.config.loadData();
           } catch (error) {

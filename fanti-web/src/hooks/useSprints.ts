@@ -51,7 +51,7 @@ export function useSprints(token?: string) {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.put(`/Sprints/${id}`, JSON.stringify(updates));
+      const res = await api.put(`/Sprints`, JSON.stringify(updates));
       const data = await res.data;
       setSprints((prev) => prev.map(s => s.id === id ? data.data : s));
       return data;

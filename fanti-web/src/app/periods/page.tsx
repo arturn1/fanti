@@ -24,8 +24,8 @@ export default function PeriodsPage() {
   // Using custom hooks
   const { projects } = useProjects();
   const { periods, loading: periodsLoading, createPeriod, updatePeriod, deletePeriod } = usePeriods();
-  const { staff: staffs, setStaff } = useStaff();
-  const { periodStaff: periodStaffs } = usePeriodStaff();
+  const { staffs } = useStaff();
+  const { periodStaffs } = usePeriodStaff();
   const { tasksPeriod } = useTasksPeriod();
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
 

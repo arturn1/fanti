@@ -5,7 +5,7 @@ import { useDataSource } from './useDataSource';
 
 export function usePeriodStaff(token?: string) {
   const { mode, excelData, ready } = useDataSource();
-  const [periodStaff, setPeriodStaff] = useState<any[]>([]);
+  const [periodStaffs, setPeriodStaff] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
@@ -122,7 +122,7 @@ export function usePeriodStaff(token?: string) {
   }
 
   return {
-    periodStaff,
+    periodStaffs,
     loading,
     error,
     setPeriodStaff,

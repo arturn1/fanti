@@ -5,7 +5,7 @@ import { useDataSource } from './useDataSource';
 
 export function useStaff(token?: string) {
   const { mode, excelData, ready } = useDataSource();
-  const [staff, setStaff] = useState<any[]>([]);
+  const [staffs, setStaff] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
@@ -51,7 +51,7 @@ export function useStaff(token?: string) {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.put(`/Staff/${id}`, JSON.stringify(updates));
+      const res = await api.put(`/Staff`, { ...updates, id });
       const data = await res.data;
       setStaff((prev) => prev.map(s => s.id === id ? data.data : s));
       return data;
@@ -93,7 +93,7 @@ export function useStaff(token?: string) {
   }
 
   return {
-    staff,
+    staffs,
     loading,
     error,
     setStaff,

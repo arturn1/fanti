@@ -47,11 +47,43 @@ export function useTasks(token?: string) {
     }
   }
 
+  async function createSubTask(task: any) {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.post('/Tasks/subTask', JSON.stringify(task));
+      const data = await res.data;
+      setTasks((prev) => [...prev, data.data]);
+      return data;
+    } catch (err: any) {
+      setError(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function patchTask(id: string, updates: any) {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.patch(`/Tasks`, JSON.stringify({ ...updates, id }));
+      const data = await res.data;
+      setTasks((prev) => prev.map(t => t.id === id ? data.data : t));
+      return data;
+    } catch (err: any) {
+      setError(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function updateTask(id: string, updates: any) {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.put(`/Tasks/${id}`, JSON.stringify(updates));
+      const res = await api.put(`/Tasks`, JSON.stringify({ ...updates, id }));
       const data = await res.data;
       setTasks((prev) => prev.map(t => t.id === id ? data.data : t));
       return data;
@@ -144,9 +176,11 @@ export function useTasks(token?: string) {
     createTask,
     updateTask,
     deleteTask,
+    patchTask,
     getTask,
     getTasksByProject,
     getTasksBySprint,
-    getSubtasks
+    getSubtasks,
+    createSubTask
   };
 }

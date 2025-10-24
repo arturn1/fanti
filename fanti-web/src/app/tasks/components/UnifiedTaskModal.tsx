@@ -1,6 +1,6 @@
 'use client';
 
-import { getTaskCategoryLabel, getTaskStatusLabel, getTaskTypeLabel, getTaskTypeLabelFromTaskType, Period, PeriodStaff, Staff, Task, TaskCategory, TaskDependency, TasksPeriod, TaskStatus, TaskType, Team, User } from '@/types';
+import { getTaskCategoryLabel, getTaskStatusLabel, getTaskTypeLabel, getTaskTypeLabelFromTaskType, Period, PeriodStaff, Task, TaskCategory, TaskDependency, TasksPeriod, TaskStatus, TaskType, User } from '@/types';
 import { isRangeOverlap } from '@/utils/dateRange';
 import { getAllStatusColors } from '@/utils/taskColors';
 import {
@@ -33,105 +33,96 @@ import React, { useEffect, useState } from 'react';
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 // Fetch teams for the Team select field
-const useTeams = () => {
-  const [teams, setTeams] = useState<Team[]>([]);
-  useEffect(() => {
-    fetch('/api/teams')
-      .then(res => res.json())
-      .then(data => setTeams(data?.data || []));
-  }, []);
-  return teams;
-};
 
 // --- TasksPeriodsTab component ---
-interface TasksPeriodsTabProps {
-  task: Task | null;
-}
+// interface TasksPeriodsTabProps {
+//   task: Task | null;
+// }
 
-const TasksPeriodsTab: React.FC<TasksPeriodsTabProps> = ({ task }) => {
-  const [loading, setLoading] = useState(false);
-  const [tasksPeriods, setTasksPeriods] = useState<TasksPeriod[]>([]);
-  const [periodStaffs, setPeriodStaffs] = useState<PeriodStaff[]>([]);
-  const [staffs, setStaffs] = useState<Staff[]>([]);
-  const [periods, setPeriods] = useState<Period[]>([]);
+// const TasksPeriodsTab: React.FC<TasksPeriodsTabProps> = ({ task }) => {
+//   const [loading, setLoading] = useState(false);
+//   const [tasksPeriods, setTasksPeriods] = useState<TasksPeriod[]>([]);
+//   const [periodStaffs, setPeriodStaffs] = useState<PeriodStaff[]>([]);
+//   const [staffs, setStaffs] = useState<Staff[]>([]);
+//   const [periods, setPeriods] = useState<Period[]>([]);
 
-  useEffect(() => {
-    if (!task) return;
-    setLoading(true);
-    Promise.all([
-      fetch('/api/tasksPeriod').then(res => res.json()),
-      fetch('/api/periodStaff').then(res => res.json()),
-      fetch('/api/staff').then(res => res.json()),
-      fetch('/api/periods').then(res => res.json())
-    ])
-      .then(([tasksPeriodData, periodStaffData, staffData, periodsData]) => {
-        // Filtrar usando os dados recebidos diretamente
-        const filtered = (tasksPeriodData?.data || []).filter((tp: TasksPeriod) => {
-          if (tp.projectId !== task.projectId) {
-            return false;
-          }
-          const periodStaff = (periodStaffData?.data || []).find((ps: PeriodStaff) => ps.id === tp.periodStaffId);
-          if (!periodStaff) {
-            return false;
-          }
-          const period = (periodsData?.data || []).find((p: Period) => p.id === periodStaff.periodId);
-          if (!period) {
-            return false;
-          }
-          if (!period.startDate || !period.endDate || !task.startDate || !task.endDate) {
-            return false;
-          }
-          return isRangeOverlap(period.startDate, period.endDate, task.startDate, task.endDate);
-        });
-        setTasksPeriods(filtered);
-        setPeriodStaffs(periodStaffData?.data || []);
-        setStaffs(staffData?.data || []);
-        setPeriods(periodsData?.data || []);
-      })
-      .catch(() => {
-        setTasksPeriods([]);
-        setPeriodStaffs([]);
-        setStaffs([]);
-        setPeriods([]);
-      })
-      .finally(() => setLoading(false));
-  }, [task]);
+//   useEffect(() => {
+//     if (!task) return;
+//     setLoading(true);
+//     Promise.all([
+//       fetch('/api/tasksPeriod').then(res => res.json()),
+//       fetch('/api/periodStaff').then(res => res.json()),
+//       fetch('/api/staff').then(res => res.json()),
+//       fetch('/api/periods').then(res => res.json())
+//     ])
+//       .then(([tasksPeriodData, periodStaffData, staffData, periodsData]) => {
+//         // Filtrar usando os dados recebidos diretamente
+        // const filtered = (tasksPeriodData?.data || []).filter((tp: TasksPeriod) => {
+        //   if (tp.projectId !== task.projectId) {
+        //     return false;
+        //   }
+        //   const periodStaff = (periodStaffData?.data || []).find((ps: PeriodStaff) => ps.id === tp.periodStaffId);
+        //   if (!periodStaff) {
+        //     return false;
+        //   }
+        //   const period = (periodsData?.data || []).find((p: Period) => p.id === periodStaff.periodId);
+        //   if (!period) {
+        //     return false;
+        //   }
+        //   if (!period.startDate || !period.endDate || !task.startDate || !task.endDate) {
+        //     return false;
+        //   }
+        //   return isRangeOverlap(period.startDate, period.endDate, task.startDate, task.endDate);
+        // });
+//         setTasksPeriods(filtered);
+//         setPeriodStaffs(periodStaffData?.data || []);
+//         setStaffs(staffData?.data || []);
+//         setPeriods(periodsData?.data || []);
+//       })
+//       .catch(() => {
+//         setTasksPeriods([]);
+//         setPeriodStaffs([]);
+//         setStaffs([]);
+//         setPeriods([]);
+//       })
+//       .finally(() => setLoading(false));
+//   }, [task]);
 
-  // Helper to get staff name from periodStaffId
-  const getStaffName = (periodStaffId: string) => {
-    const periodStaff = periodStaffs.find(ps => ps.id === periodStaffId);
-    if (!periodStaff) return '-';
-    const staff = staffs.find(s => s.id === periodStaff.staffId);
-    return staff ? staff.name : '-';
-  };
+//   // Helper to get staff name from periodStaffId
+//   const getStaffName = (periodStaffId: string) => {
+//     const periodStaff = periodStaffs.find(ps => ps.id === periodStaffId);
+//     if (!periodStaff) return '-';
+//     const staff = staffs.find(s => s.id === periodStaff.staffId);
+//     return staff ? staff.name : '-';
+//   };
 
-  // Helper to get period name from periodStaffId
-  const getPeriodName = (periodStaffId: string) => {
-    const periodStaff = periodStaffs.find(ps => ps.id === periodStaffId);
-    if (!periodStaff) return '-';
-    const period = periods.find(p => p.id === periodStaff.periodId);
-    return period ? period.name : '-';
-  };
+//   // Helper to get period name from periodStaffId
+//   const getPeriodName = (periodStaffId: string) => {
+//     const periodStaff = periodStaffs.find(ps => ps.id === periodStaffId);
+//     if (!periodStaff) return '-';
+//     const period = periods.find(p => p.id === periodStaff.periodId);
+//     return period ? period.name : '-';
+//   };
 
-  const columns = [
-    { title: 'Sprint', dataIndex: 'periodStaffId', key: 'periodName', render: (id: string) => getPeriodName(id) },
-    { title: 'Número da tarefa', dataIndex: 'taskNumber', key: 'taskNumber' },
-    { title: 'Horas', dataIndex: 'taskHours', key: 'taskHours' },
-    { title: 'Staff', dataIndex: 'periodStaffId', key: 'periodStaffId', render: (id: string) => getStaffName(id) },
-  ];
+//   const columns = [
+//     { title: 'Sprint', dataIndex: 'periodStaffId', key: 'periodName', render: (id: string) => getPeriodName(id) },
+//     { title: 'Número da tarefa', dataIndex: 'taskNumber', key: 'taskNumber' },
+//     { title: 'Horas', dataIndex: 'taskHours', key: 'taskHours' },
+//     { title: 'Staff', dataIndex: 'periodStaffId', key: 'periodStaffId', render: (id: string) => getStaffName(id) },
+//   ];
 
-  return (
-    <Spin spinning={loading}>
-      <Table
-        dataSource={tasksPeriods}
-        columns={columns}
-        rowKey="id"
-        pagination={{ pageSize: 5 }}
-        locale={{ emptyText: 'Nenhum registro encontrado para este projeto.' }}
-      />
-    </Spin>
-  );
-};
+//   return (
+//     <Spin spinning={loading}>
+//       <Table
+//         dataSource={tasksPeriods}
+//         columns={columns}
+//         rowKey="id"
+//         pagination={{ pageSize: 5 }}
+//         locale={{ emptyText: 'Nenhum registro encontrado para este projeto.' }}
+//       />
+//     </Spin>
+//   );
+// };
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -145,6 +136,15 @@ interface UnifiedTaskModalProps {
   onClose: () => void;
   onSuccess: () => void;
   activeTab?: string;
+  createTask: (data: any) => Promise<Task>;
+  updateTask: (taskId: string, data: any) => Promise<Task>;
+  periods: any[];
+  periodStaffs: any[];
+  staffs: User[];
+  tasksPeriod: any[];
+  teams: any[];
+  taskDependencies?: TaskDependency[];
+  getDependenciesByTask: (taskId: string) => Promise<TaskDependency[]>;
 }
 
 export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
@@ -153,27 +153,28 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
   visible,
   onClose,
   onSuccess,
-  activeTab = 'edit'
+  activeTab = 'edit',
+  createTask,
+  updateTask,
+  periods,
+  periodStaffs,
+  staffs,
+  tasksPeriod,
+  teams,
+  taskDependencies,
+  getDependenciesByTask
 }) => {
   const { message } = App.useApp();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [users, setUsers] = useState<User[]>([]);
   const [dependenciesWithTasks, setDependenciesWithTasks] = useState<(TaskDependency & { predecessorTask: Task })[]>([]);
   const [successorDependenciesWithTasks, setSuccessorDependenciesWithTasks] = useState<(TaskDependency & { successorTask: Task })[]>([]);
   const [currentTab, setCurrentTab] = useState(activeTab);
+  const [filtered, setFiltered] = useState<TasksPeriod[]>([]);
+
+
 
   const statusColors = getAllStatusColors();
-  const teams = useTeams();
-
-  useEffect(() => {
-    if (visible) {
-      loadData();
-      if (task) {
-        loadTaskData();
-      }
-    }
-  }, [visible, task]);
 
   useEffect(() => {
     setCurrentTab(activeTab);
@@ -191,15 +192,9 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
   const childTasks = tasks.filter(t => t.parentTaskId === task?.id);
   const calculatedProgress = isProjectType ? calculateProjectProgress(childTasks) : (task?.progress || 0);
 
-  const loadData = async () => {
-    try {
-      const usersRes = await fetch('/api/users');
-      const usersData = await usersRes.json();
-      setUsers(usersData?.data || []);
-    } catch (error) {
-      message.error('Erro ao carregar dados:' + error);
-    }
-  };
+  useEffect(() => {
+    loadTaskData();
+  }, [task]);
 
   const loadTaskData = async () => {
     if (!task) return;
@@ -218,26 +213,40 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
         category: getTaskCategoryLabel(task.category),
         teamId: task.teamId || undefined
       });
-      // Carregar atribuições e dependências via API interna
-      const [dependenciesRes, allDependenciesRes] = await Promise.all([
-        fetch(`/api/taskDependencies?taskId=${task.id}`),
-        fetch('/api/taskDependencies')
-      ]);
-      const [dependenciesData, allDependencies] = await Promise.all([
-        dependenciesRes.json(),
-        allDependenciesRes.json()
-      ]);
 
-      const predecessorDeps = (dependenciesData?.data || []).filter((dep: TaskDependency) => dep.successorTaskId === task.id);
+      const dependenciesData = await getDependenciesByTask(task.id);
+
+      const predecessorDeps = (dependenciesData || []).filter((dep: TaskDependency) => dep.successorTaskId === task.id);
+      
       setDependenciesWithTasks(predecessorDeps.map((dependency: TaskDependency) => {
         const predecessorTask = tasks.find((t: Task) => t.id === dependency.predecessorTaskId);
         return { ...dependency, predecessorTask: predecessorTask! };
       }));
-      const successorDeps = (allDependencies?.data || []).filter((dep: TaskDependency) => dep.predecessorTaskId === task.id);
+      const successorDeps = (taskDependencies || []).filter((dep: TaskDependency) => dep.predecessorTaskId === task.id);
+      console.log('successorDeps', taskDependencies);
       setSuccessorDependenciesWithTasks(successorDeps.map((dependency: TaskDependency) => {
         const successorTask = tasks.find((t: Task) => t.id === dependency.successorTaskId);
         return { ...dependency, successorTask: successorTask! };
       }));
+
+      setFiltered((tasksPeriod || []).filter((tp: TasksPeriod) => {
+        if (tp.projectId !== task.projectId) {
+          return false;
+        }
+        const periodStaff = (periodStaffs || []).find((ps: PeriodStaff) => ps.id === tp.periodStaffId);
+        if (!periodStaff) {
+          return false;
+        }
+        const period = (periods || []).find((p: Period) => p.id === periodStaff.periodId);
+        if (!period) {
+          return false;
+        }
+        if (!period.startDate || !period.endDate || !task.startDate || !task.endDate) {
+          return false;
+        }
+        return isRangeOverlap(period.startDate, period.endDate, task.startDate, task.endDate);
+      }));
+
     } catch (error) {
       message.error('Erro ao carregar dados da tarefa:');
     }
@@ -262,24 +271,12 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
         category: typeof values.category === 'string' ? getTaskCategoryLabel(values.category) : values.category,
         teamId: values.teamId
       };
-      const res = await fetch(`/api/tasks/${task.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updateData)
-      });
-
-      if (res.ok) {
-        message.success('Tarefa atualizada com sucesso!');
-        onSuccess();
-        onClose();
-      } else {
-        const err = await res.json();
-        message.error(err?.message || 'Erro ao atualizar tarefa');
-      }
+      await updateTask!(task.id, updateData);
     } catch (error) {
       message.error('Erro ao atualizar tarefa');
     } finally {
       setLoading(false);
+      onSuccess();
     }
   };
 
@@ -313,6 +310,29 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
       message.error('Erro ao remover dependência');
     }
   };
+
+  // Helper to get staff name from periodStaffId
+  const getStaffName = (periodStaffId: string) => {
+    const periodStaff = periodStaffs.find(ps => ps.id === periodStaffId);
+    if (!periodStaff) return '-';
+    const staff = staffs.find(s => s.id === periodStaff.staffId);
+    return staff ? staff.name : '-';
+  };
+
+  // Helper to get period name from periodStaffId
+  const getPeriodName = (periodStaffId: string) => {
+    const periodStaff = periodStaffs.find(ps => ps.id === periodStaffId);
+    if (!periodStaff) return '-';
+    const period = periods.find(p => p.id === periodStaff.periodId);
+    return period ? period.name : '-';
+  };
+
+  const columns = [
+    { title: 'Sprint', dataIndex: 'periodStaffId', key: 'periodName', render: (id: string) => getPeriodName(id) },
+    { title: 'Número da tarefa', dataIndex: 'taskNumber', key: 'taskNumber' },
+    { title: 'Horas', dataIndex: 'taskHours', key: 'taskHours' },
+    { title: 'Staff', dataIndex: 'periodStaffId', key: 'periodStaffId', render: (id: string) => getStaffName(id) },
+  ];
 
   return (
     <Modal
@@ -612,8 +632,15 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
         </TabPane>
 
         <TabPane tab="Tasks" key="tasks">
-          {/* TasksPeriods Table */}
-          <TasksPeriodsTab task={task} />
+          <Spin spinning={loading}>
+            <Table
+              dataSource={filtered}
+              columns={columns}
+              rowKey="id"
+              pagination={{ pageSize: 5 }}
+              locale={{ emptyText: 'Nenhum registro encontrado para este projeto.' }}
+            />
+          </Spin>
         </TabPane>
       </Tabs>
     </Modal>

@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
-import "./globals.css";
+import AppHeader from "@/components/AppHeader";
 import AntdProvider from "@/components/providers/antd-provider";
 import { AuthProvider } from "@/hooks/useAuth";
-import { App, Layout, Spin } from "antd";
-import AppHeader from "@/components/AppHeader";
-import React from "react";
 import { DataSourceProvider } from "@/hooks/useDataSource";
+import { Layout } from "antd";
+import type { Metadata } from "next";
+import React from "react";
+import "./globals.css";
 
 
 export const metadata: Metadata = {

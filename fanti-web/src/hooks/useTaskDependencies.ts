@@ -63,12 +63,19 @@ export function useTaskDependencies(token?: string) {
     }
   }
 
-  async function deleteTaskDependency(id: string) {
+  async function deleteTaskDependency(predecessorTaskId: string, successorTaskId: string) {
     setLoading(true);
     setError(null);
     try {
-      await api.delete(`/TaskDependencies/${id}`);
-      setTaskDependencies((prev) => prev.filter(td => td.id !== id));
+      // Find dependency by task IDs
+      const dependency = taskDependencies.find(
+        td => td.predecessorTaskId === predecessorTaskId && td.successorTaskId === successorTaskId
+      );
+      if (!dependency) {
+        throw new Error('Dependency not found');
+      }
+      await api.delete(`/TaskDependencies`, { data: { predecessorTaskId, successorTaskId } });
+      setTaskDependencies((prev) => prev.filter(td => td.id !== dependency.id));
       return true;
     } catch (err: any) {
       setError(err);
@@ -97,7 +104,7 @@ export function useTaskDependencies(token?: string) {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get(`/TaskDependencies/task/${taskId}`);
+      const res = await api.get(`/TaskDependencies/GetDependenciesByTaskId/${taskId}`);
       return res.data.data;
     } catch (err: any) {
       setError(err);

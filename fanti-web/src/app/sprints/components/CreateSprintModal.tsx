@@ -1,5 +1,6 @@
 'use client';
 
+import { useSprints, useTasks } from '@/hooks';
 import { CreateSprintCommand, CreateTaskCommand, Project, Sprint } from '@/types';
 import { PlusOutlined } from '@ant-design/icons';
 import {
@@ -9,10 +10,10 @@ import {
   Input,
   message,
   Modal,
-  Select,
   Typography
 } from 'antd';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+
 
 const { RangePicker } = DatePicker;
 const { TextArea } = Input;
@@ -23,9 +24,11 @@ interface CreateSprintModalProps {
   onClose: () => void;
   onSuccess: () => void;
   project: Project;
+  createSprint: (data: CreateSprintCommand) => Promise<Sprint>;
+  createTask: (data: CreateTaskCommand) => Promise<any>;
 }
 
-export default function CreateSprintModal({ visible, onClose, onSuccess, project }: CreateSprintModalProps) {
+export default function CreateSprintModal({ visible, onClose, onSuccess, project, createSprint, createTask }: CreateSprintModalProps) {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
 
@@ -42,17 +45,8 @@ export default function CreateSprintModal({ visible, onClose, onSuccess, project
         endDate: values.dateRange[1].format('YYYY-MM-DD'),
         status: "1", // String conforme esperado pelo comando
       };
-
-      // Criar o sprint
-      const createdSprint = await fetch(`/api/sprints`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(sprintData)
-      }).then(res => res.json()).then(data => data?.data as Sprint);
-
-      if (!createdSprint) {
-        throw new Error('Sprint não foi criado corretamente.');
-      }
+      
+      const createdSprint = await createSprint(sprintData);
 
       // Criar automaticamente uma task do tipo "project" com os dados do sprint
       const taskData: CreateTaskCommand = {
@@ -67,12 +61,7 @@ export default function CreateSprintModal({ visible, onClose, onSuccess, project
         EndDate: values.dateRange[1].toISOString(),
       };
 
-      // Criar a task do tipo projeto
-      await fetch(`/api/tasks`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(taskData)
-      });
+      await createTask(taskData);
 
       message.success('Sprint e milestone criados com sucesso!');
       form.resetFields();

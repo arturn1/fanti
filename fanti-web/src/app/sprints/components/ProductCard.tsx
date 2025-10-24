@@ -69,12 +69,6 @@ export default function ProductCard({
   milestoneFilter = 'all'
 }: ProductCardProps) {
 
-  // Função para converter status de string para enum de projeto
-  const parseProjectStatus = (status: string | number): ProjectStatus => {
-    const statusNum = typeof status === 'string' ? parseInt(status) : status;
-    return statusNum as ProjectStatus;
-  };
-
   const getStatusConfig = (status: ProductData['status']) => {
     const configs = {
       planning: { color: 'default', icon: <ClockCircleOutlined />, text: 'Planejamento' },
