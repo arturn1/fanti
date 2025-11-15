@@ -4,6 +4,7 @@ import { Card, Col, Row, Tag, Typography } from 'antd';
 import { useState } from 'react';
 import AddVersionButton from './components/AddVersionButton';
 import VersionModal from './components/VersionModal';
+import { useProjectVersions } from '@/hooks';
 
 const { Title, Text } = Typography;
 
@@ -31,7 +32,7 @@ interface ProjectsDashboardProps {
 export default function ProjectsDashboard({ projects }: ProjectsDashboardProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalProjectId, setModalProjectId] = useState<string | null>(null);
-  const [localProjects, setLocalProjects] = useState<ProjectWithVersionsDto[]>(projects);
+  const { createProjectVersion, projectVersions, updateProjectVersion, deleteProjectVersion } = useProjectVersions();
 
   // Status legível
   const statusMap: Record<string, { color: string; label: string }> = {
@@ -44,7 +45,7 @@ export default function ProjectsDashboard({ projects }: ProjectsDashboardProps) 
   return (
     <div>
       <Row gutter={[16, 16]}>
-        {localProjects.map(project => {
+        {projectVersions.map(project => {
           // Pega a versão mais recente (maior data de deploy)
           const latestVersion = project.versions && project.versions.length > 0
             ? [...project.versions].sort((a, b) => new Date(b.deployDate).getTime() - new Date(a.deployDate).getTime())[0]
@@ -108,36 +109,18 @@ export default function ProjectsDashboard({ projects }: ProjectsDashboardProps) 
         projectId={modalProjectId || ''}
         versions={
           modalProjectId
-            ? (localProjects.find(p => p.id === modalProjectId)?.versions || [])
+            ? (projectVersions.find(p => p.id === modalProjectId)?.versions || [])
             : []
         }
         onCreate={async (version, date) => {
           if (!modalProjectId) return;
-          await fetch('/api/projectVersion', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ projectId: modalProjectId, version, deployDate: date })
-          });
-          // Atualiza lista local
-          const res = await api.get('/projects?versions=true');
-          const data = await res.data;
-          setLocalProjects(data.data || []);
+          await createProjectVersion({ ProjectId: modalProjectId, version, deployDate: date });
         }}
         onEdit={async (id, version) => {
-          await fetch('/api/projectVersion', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id, version })
-          });
-          const res = await fetch('/api/projects?versions=true');
-          const data = await res.json();
-          setLocalProjects(data.data || []);
+          await updateProjectVersion(id, { version });
         }}
         onDelete={async (id) => {
-          await fetch(`/api/projectVersion?id=${id}`, { method: 'DELETE' });
-          const res = await fetch('/api/projects?versions=true');
-          const data = await res.json();
-          setLocalProjects(data.data || []);
+          await deleteProjectVersion(id);
         }}
       />
     </div>

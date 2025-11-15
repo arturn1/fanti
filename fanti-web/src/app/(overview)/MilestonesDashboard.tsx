@@ -41,7 +41,6 @@ export default function MilestonesDashboard({ projects, sprints, tasks, tasksPer
   };
 
   const productsData: ProductData[] = useMemo(() => calculateProductData(projects, sprints, tasks), [projects, sprints, tasks]);
-  console.log('Products Data:', productsData);
 
   const filteredProducts = useMemo(() => {
     let filtered = productsData;
@@ -50,15 +49,12 @@ export default function MilestonesDashboard({ projects, sprints, tasks, tasksPer
         ...product,
         sprints: product.sprints.filter(s => parseSprintStatus(s.status) !== 3)
       }));
-      console.log('Filtered Products (Not Completed):', filtered);
     } else if (statusFilter !== 'all') {
       filtered = productsData.map(product => ({
         ...product,
         sprints: product.sprints.filter(s => parseSprintStatus(s.status) === statusFilter)
       }));
-      console.log('Filtered Products by Status:', filtered);
     }
-    console.log('Filtered Products (Final):', filtered);
     return filtered.filter(product => product.sprints && product.sprints.length > 0);
 
   }, [productsData, statusFilter]);

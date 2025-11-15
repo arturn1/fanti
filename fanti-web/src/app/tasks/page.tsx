@@ -58,7 +58,7 @@ function TasksPageContent() {
   const { staffs } = useStaff();
   const { tasksPeriod } = useTasksPeriod();
 
-  let anyLoading = loadingSprints || loadingTeams || loading;
+  const anyLoading = loadingSprints || loadingTeams || loading;
 
   const [selectedTeam, setSelectedTeam] = useState<string>('all');
 
@@ -95,7 +95,6 @@ function TasksPageContent() {
   };
 
   const ganttTasks = useMemo(() => {
-    console.log('Recalculating ganttTasks...');
     if (!tasks.length || anyLoading) {
       return [];
     }

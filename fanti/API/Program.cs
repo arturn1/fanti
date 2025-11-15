@@ -26,7 +26,7 @@ string connectionString = Environment.GetEnvironmentVariable("APP_DATABASE_URL",
 builder.Services.AddDatabaseConfiguration(connectionString);
 builder.Services.AddJwtBearerAuthentication(builder.Configuration);
 
-// builder.Services.AddControllers(options => { options.Filters.Add(new Microsoft.AspNetCore.Mvc.Authorization.AuthorizeFilter()); });
+builder.Services.AddControllers(options => { options.Filters.Add(new Microsoft.AspNetCore.Mvc.Authorization.AuthorizeFilter()); });
 
 #endregion
 

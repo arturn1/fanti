@@ -158,7 +158,6 @@ export default function SprintsPage() {
   });
 
   const renderProductCard = (productData: ProductDataType) => {
-    console.log('renderProductCard - productData:', productData);
     return (
       <Col xs={24} sm={12} lg={8} xl={6} key={productData.project.id}>
         <ProductCard

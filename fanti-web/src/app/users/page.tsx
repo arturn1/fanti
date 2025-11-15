@@ -25,6 +25,7 @@ import {
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { User, UserRole } from '@/types';
+import { useUsers } from '@/hooks';
 // import { usersService } from '@/services/users';
 
 
@@ -32,30 +33,13 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState('');
   const [selectedRole, setSelectedRole] = useState<UserRole | ''>('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const {users, loading} = useUsers();
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
-  const loadUsers = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch('/api/users');
-      const data = await res.json();
-      setUsers(data?.data || []);
-    } catch (error) {
-      message.error('Erro ao carregar usuários');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Filtrar usuários baseado nos critérios
   const filteredUsers = users.filter(user => {

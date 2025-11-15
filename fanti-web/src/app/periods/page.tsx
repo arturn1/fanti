@@ -25,8 +25,8 @@ export default function PeriodsPage() {
   const { projects } = useProjects();
   const { periods, loading: periodsLoading, createPeriod, updatePeriod, deletePeriod } = usePeriods();
   const { staffs } = useStaff();
-  const { periodStaffs } = usePeriodStaff();
-  const { tasksPeriod } = useTasksPeriod();
+  const { periodStaffs, updatePeriodStaff } = usePeriodStaff();
+  const { tasksPeriod, createTaskPeriod, deleteTaskPeriod } = useTasksPeriod();
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
 
   // Form and search
@@ -38,15 +38,18 @@ export default function PeriodsPage() {
 
   // Custom hooks
   const modalsHook = useModals();
-  const organizationHook = useOrganization(
+  const organizationHook = useOrganization({
     periodStaffs,
     tasksPeriod,
     message,
-    modalsHook.modalData.organizingPeriod || undefined,
-    () => {
+    organizingPeriod: modalsHook.modalData.organizingPeriod || undefined,
+    onDataChange: () => {
       // Refresh data after organization changes - hooks will handle this automatically
-    }
-  );
+    },
+    updatePeriodStaff,
+    createTaskPeriod,
+    deleteTaskPeriod
+  });
 
   // Utility functions
   const getTaskColor = useCallback((hours: number) => {
@@ -109,7 +112,7 @@ export default function PeriodsPage() {
     setPendingModal({ type: 'org', period });
     await refreshAllData();
   }, [refreshAllData]);
-  
+
   // Efeito para abrir o modal só após refreshAllData e atualização dos estados
   useEffect(() => {
     if (!pendingModal || refreshing) return;

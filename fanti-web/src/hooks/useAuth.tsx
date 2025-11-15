@@ -5,6 +5,7 @@ import { User } from "@/types";
 import { Spin } from "antd";
 import { signIn, signOut } from "next-auth/react";
 import React, { ReactNode, useCallback, useContext, useEffect } from "react";
+import { useUsers } from "./useUsers";
 
 interface AuthContextType {
   user: User | null;
@@ -28,6 +29,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userSaved, setUserSaved] = React.useState(false);
   const [status, setStatus] = React.useState<'loading' | 'authenticated' | 'unauthenticated'>('loading');
   const [update, setUpdate] = React.useState(0);
+  const { users, createUser } = useUsers(); // Apenas para garantir carregamento inicial dos usuários
 
   // Adapta o mapeamento do usuário para claims customizadas e múltiplos formatos
   function mapUser(raw: any): User {
@@ -197,12 +199,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     try {
       const payload = mapUserToCommand(user);
-      console.log("Salvando usuário no backend:", payload);
-      await fetch("/api/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      await createUser(payload);
       setUserSaved(true);
     } catch (e) {
       console.error("Erro ao salvar usuário no backend:", e);
@@ -215,7 +212,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isLoading = status === 'loading' && !manualUser;
 
   useEffect(() => {
-    console.log("Tentando login...");
     login();
   }, []);
 
@@ -229,7 +225,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = useCallback(async (provider?: string) => {
     const stored = localStorage.getItem('manual_user');
     if (window.location.hash.includes('id_token')) {
-      console.log("Detectado id_token na URL, processando login...");
       // Decodifica e seta manualUser a partir do id_token
       const hash = window.location.hash;
       const match = hash.match(/id_token=([^&]+)/);
@@ -237,7 +232,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Também extrai access_token do hash
         const accessMatch = hash.match(/access_token=([^&]+)/);
         const accessToken = accessMatch ? accessMatch[1] : null;
-        console.log("Decodificando id_token...", match);
         try {
           const idToken = match[1];
           const base64Url = idToken.split('.')[1];
@@ -270,11 +264,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
     } else if (!stored && manualUser == null) {
-      console.log("Iniciando signIn com provider:", provider || 'is4');
       await signIn(provider || 'is4', { redirect: false });
       setStatus('unauthenticated');
     } else if (stored && !manualUser) {
-      console.log("Carregando usuário do localStorage...");
       // Se há no localStorage mas não no estado, carrega
       try {
         setManualUser(JSON.parse(stored));
@@ -284,7 +276,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setStatus('unauthenticated');
       }
     } else if (manualUser) {
-      console.log("Usuário já está no estado local.");
       setStatus('authenticated');
     }
   }, [manualUser]);

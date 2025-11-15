@@ -1,5 +1,6 @@
 'use client';
 
+import { useTaskDependencies } from '@/hooks';
 import { getTaskCategoryLabel, getTaskStatusLabel, getTaskTypeLabel, getTaskTypeLabelFromTaskType, Period, PeriodStaff, Task, TaskCategory, TaskDependency, TasksPeriod, TaskStatus, TaskType, User } from '@/types';
 import { isRangeOverlap } from '@/utils/dateRange';
 import { getAllStatusColors } from '@/utils/taskColors';
@@ -32,97 +33,6 @@ import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import React, { useEffect, useState } from 'react';
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
-// Fetch teams for the Team select field
-
-// --- TasksPeriodsTab component ---
-// interface TasksPeriodsTabProps {
-//   task: Task | null;
-// }
-
-// const TasksPeriodsTab: React.FC<TasksPeriodsTabProps> = ({ task }) => {
-//   const [loading, setLoading] = useState(false);
-//   const [tasksPeriods, setTasksPeriods] = useState<TasksPeriod[]>([]);
-//   const [periodStaffs, setPeriodStaffs] = useState<PeriodStaff[]>([]);
-//   const [staffs, setStaffs] = useState<Staff[]>([]);
-//   const [periods, setPeriods] = useState<Period[]>([]);
-
-//   useEffect(() => {
-//     if (!task) return;
-//     setLoading(true);
-//     Promise.all([
-//       fetch('/api/tasksPeriod').then(res => res.json()),
-//       fetch('/api/periodStaff').then(res => res.json()),
-//       fetch('/api/staff').then(res => res.json()),
-//       fetch('/api/periods').then(res => res.json())
-//     ])
-//       .then(([tasksPeriodData, periodStaffData, staffData, periodsData]) => {
-//         // Filtrar usando os dados recebidos diretamente
-        // const filtered = (tasksPeriodData?.data || []).filter((tp: TasksPeriod) => {
-        //   if (tp.projectId !== task.projectId) {
-        //     return false;
-        //   }
-        //   const periodStaff = (periodStaffData?.data || []).find((ps: PeriodStaff) => ps.id === tp.periodStaffId);
-        //   if (!periodStaff) {
-        //     return false;
-        //   }
-        //   const period = (periodsData?.data || []).find((p: Period) => p.id === periodStaff.periodId);
-        //   if (!period) {
-        //     return false;
-        //   }
-        //   if (!period.startDate || !period.endDate || !task.startDate || !task.endDate) {
-        //     return false;
-        //   }
-        //   return isRangeOverlap(period.startDate, period.endDate, task.startDate, task.endDate);
-        // });
-//         setTasksPeriods(filtered);
-//         setPeriodStaffs(periodStaffData?.data || []);
-//         setStaffs(staffData?.data || []);
-//         setPeriods(periodsData?.data || []);
-//       })
-//       .catch(() => {
-//         setTasksPeriods([]);
-//         setPeriodStaffs([]);
-//         setStaffs([]);
-//         setPeriods([]);
-//       })
-//       .finally(() => setLoading(false));
-//   }, [task]);
-
-//   // Helper to get staff name from periodStaffId
-//   const getStaffName = (periodStaffId: string) => {
-//     const periodStaff = periodStaffs.find(ps => ps.id === periodStaffId);
-//     if (!periodStaff) return '-';
-//     const staff = staffs.find(s => s.id === periodStaff.staffId);
-//     return staff ? staff.name : '-';
-//   };
-
-//   // Helper to get period name from periodStaffId
-//   const getPeriodName = (periodStaffId: string) => {
-//     const periodStaff = periodStaffs.find(ps => ps.id === periodStaffId);
-//     if (!periodStaff) return '-';
-//     const period = periods.find(p => p.id === periodStaff.periodId);
-//     return period ? period.name : '-';
-//   };
-
-//   const columns = [
-//     { title: 'Sprint', dataIndex: 'periodStaffId', key: 'periodName', render: (id: string) => getPeriodName(id) },
-//     { title: 'Número da tarefa', dataIndex: 'taskNumber', key: 'taskNumber' },
-//     { title: 'Horas', dataIndex: 'taskHours', key: 'taskHours' },
-//     { title: 'Staff', dataIndex: 'periodStaffId', key: 'periodStaffId', render: (id: string) => getStaffName(id) },
-//   ];
-
-//   return (
-//     <Spin spinning={loading}>
-//       <Table
-//         dataSource={tasksPeriods}
-//         columns={columns}
-//         rowKey="id"
-//         pagination={{ pageSize: 5 }}
-//         locale={{ emptyText: 'Nenhum registro encontrado para este projeto.' }}
-//       />
-//     </Spin>
-//   );
-// };
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -172,6 +82,11 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
   const [currentTab, setCurrentTab] = useState(activeTab);
   const [filtered, setFiltered] = useState<TasksPeriod[]>([]);
 
+  const {
+    deleteTaskDependency: deleteTaskDependencyHook,
+    getDependenciesByTask: getDependenciesByTaskHook
+  } = useTaskDependencies();
+
 
 
   const statusColors = getAllStatusColors();
@@ -217,13 +132,12 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
       const dependenciesData = await getDependenciesByTask(task.id);
 
       const predecessorDeps = (dependenciesData || []).filter((dep: TaskDependency) => dep.successorTaskId === task.id);
-      
+
       setDependenciesWithTasks(predecessorDeps.map((dependency: TaskDependency) => {
         const predecessorTask = tasks.find((t: Task) => t.id === dependency.predecessorTaskId);
         return { ...dependency, predecessorTask: predecessorTask! };
       }));
       const successorDeps = (taskDependencies || []).filter((dep: TaskDependency) => dep.predecessorTaskId === task.id);
-      console.log('successorDeps', taskDependencies);
       setSuccessorDependenciesWithTasks(successorDeps.map((dependency: TaskDependency) => {
         const successorTask = tasks.find((t: Task) => t.id === dependency.successorTaskId);
         return { ...dependency, successorTask: successorTask! };
@@ -281,31 +195,38 @@ export const UnifiedTaskModal: React.FC<UnifiedTaskModalProps> = ({
   };
 
   const handleRemoveDependency = async (dependencyId: string) => {
+    if (!task) return;
+
     try {
-      const res = await fetch(`/api/taskDependencies?id=${dependencyId}`, {
-        method: 'DELETE'
-      });
-      if (res.ok) {
-        // Recarregar dependências predecessoras
-        const updatedRes = await fetch(`/api/taskDependencies?taskId=${task!.id}`);
-        const updatedDependencies = await updatedRes.json();
-        const predecessorDeps = (updatedDependencies?.data || []).filter((dep: TaskDependency) => dep.successorTaskId === task!.id);
-        setDependenciesWithTasks(predecessorDeps.map((dependency: TaskDependency) => {
-          const predecessorTask = tasks.find((t: Task) => t.id === dependency.predecessorTaskId);
-          return { ...dependency, predecessorTask: predecessorTask! };
-        }));
-        // Recarregar dependências sucessoras
-        const allRes = await fetch('/api/taskDependencies');
-        const allDependencies = await allRes.json();
-        const successorDeps = (allDependencies?.data || []).filter((dep: TaskDependency) => dep.predecessorTaskId === task!.id);
-        setSuccessorDependenciesWithTasks(successorDeps.map((dependency: TaskDependency) => {
-          const successorTask = tasks.find((t: Task) => t.id === dependency.successorTaskId);
-          return { ...dependency, successorTask: successorTask! };
-        }));
-        message.success('Dependência removida com sucesso!');
-      } else {
-        message.error('Erro ao remover dependência');
+      // Encontrar a dependência para obter os IDs das tarefas
+      const dependency = [...dependenciesWithTasks, ...successorDependenciesWithTasks].find(d => d.id === dependencyId);
+
+      if (!dependency) {
+        message.error('Dependência não encontrada');
+        return;
       }
+
+      // Usar o hook para deletar
+      await deleteTaskDependencyHook(dependency.predecessorTaskId, dependency.successorTaskId);
+
+      // Recarregar dependências usando o hook
+      const updatedDependencies = await getDependenciesByTaskHook(task.id);
+
+      // Atualizar dependências predecessoras
+      const predecessorDeps = (updatedDependencies || []).filter((dep: TaskDependency) => dep.successorTaskId === task.id);
+      setDependenciesWithTasks(predecessorDeps.map((dep: TaskDependency) => {
+        const predecessorTask = tasks.find((t: Task) => t.id === dep.predecessorTaskId);
+        return { ...dep, predecessorTask: predecessorTask! };
+      }));
+
+      // Atualizar dependências sucessoras
+      const successorDeps = (taskDependencies || []).filter((dep: TaskDependency) => dep.predecessorTaskId === task.id);
+      setSuccessorDependenciesWithTasks(successorDeps.map((dep: TaskDependency) => {
+        const successorTask = tasks.find((t: Task) => t.id === dep.successorTaskId);
+        return { ...dep, successorTask: successorTask! };
+      }));
+
+      message.success('Dependência removida com sucesso!');
     } catch (error) {
       message.error('Erro ao remover dependência');
     }
